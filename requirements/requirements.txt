@@ -1,0 +1,10 @@
+All OS-related installation packages (Requires a package manager)
+	1) Python 3.6
+	2) Bootstrap? (Need to verify)
+
+All Language related packages
+	1) Flask
+	2) Shapely
+	3) Matplotlib
+	4) opencv-python
+	5) imultils 
