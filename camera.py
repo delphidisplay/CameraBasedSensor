@@ -8,7 +8,6 @@ class Camera:
 		ROI: A list containing all of the coordinates of the Bounding Box.
 		VS: A VideoStream object that streams from the camera url
 		dimensions: A list containing the width and height of each frame we would receive.
-
 	"""
 
 	def __init__(self, url):
