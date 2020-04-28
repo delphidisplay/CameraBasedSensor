@@ -213,15 +213,15 @@ function Draw(){
 // render mask by looping through ROI coordinates from backend
   function render_mask(){
     console.log("render mask called");
-    var render_coord = {{ camera_dict[current_camera]["ROI"] }};
+    var render_coord = {{ camera_dict[current_camera].ROI }};
     isDrawStart = true;
 
     console.log(render_coord);
 
     var rc;
     for (rc = 0; rc < render_coord.length; rc++){
-        lineCoordinates.x = render_coord[rc][0];
-        lineCoordinates.y = render_coord[rc][1];
+        lineCoordinates.x = render_coord[rc].dimensions[0];
+        lineCoordinates.y = render_coord[rc].dimensions[1];
         draw_line();
     }
 
