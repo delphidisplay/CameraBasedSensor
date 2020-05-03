@@ -163,6 +163,8 @@ class YoloVideo:
 
 				#get shape of bounding box to get intersection with ROI
 				bounding_box = [(x,y),(x,y+h),(x+w,y+h),(x+w,y),(x,y)]
+				
+				#plot bounding box and ROI to see if they make sense  
 				bounding_box_x = [x,x,x+w,x+w,x]
 				bounding_box_y = [y,y+h,y+h,y,y]
 				ROI_x = [i[0] for i in self.ROI] 
@@ -173,6 +175,7 @@ class YoloVideo:
 				#plt.plot(ROI_x, ROI_y, label="ROI", linewidth=4, color="magenta")
 				plt.title("Figure {}, Intersect Threshold: {}, Vehicle Counted: {}".format("1", "0", True))
 				#plt.show()
+				
 				intersects_flag = find_intersect.intersection_of_polygons(self.ROI,bounding_box,showPlot=True)
 				if intersects_flag:
 					if LABELS[classIDs[i]] == "car" or LABELS[classIDs[i] == "truck"]:
@@ -183,8 +186,9 @@ class YoloVideo:
 		
 		
 			
-
+'''
 if __name__ == "__main__":
 	yolo_model = YoloVideo(cv2.imread("images/car.jpg"),[[116, 28], [115, 87], [204, 297], [431, 278], [503, 138], [481, 37], [295, 27], [117, 22], [116, 28]],"yolo-coco")
 	net = yolo_model.get_yolo_object()
 	yolo_model.detect_intersections(net)
+'''
