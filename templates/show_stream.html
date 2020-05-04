@@ -112,8 +112,11 @@ var lineCoordinates = {x: 0, y: 0};
 var isDrawStart = true;
 var save_coord = false;
 
-window.onload = function() {
-  render_mask(); // render current stream ROI immediately
+window.onload = function() { 
+    var render_coord = {{ camera_dict[current_camera].ROI }};
+    if (render_coord) {
+        render_mask(); // render current stream ROI immediately
+    }
 };
 
 document.getElementById("myCanvas").addEventListener('click', function (event) {
@@ -220,8 +223,8 @@ function Draw(){
 
     var rc;
     for (rc = 0; rc < render_coord.length; rc++){
-        lineCoordinates.x = render_coord[rc].dimensions[0];
-        lineCoordinates.y = render_coord[rc].dimensions[1];
+        lineCoordinates.x = render_coord[rc][0];
+        lineCoordinates.y = render_coord[rc][1];
         draw_line();
     }
 
