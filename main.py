@@ -2,44 +2,51 @@
 from flask import Flask, request, render_template, Response, flash
 from datetime import datetime
 import cv2
+import threading
+import atexit
 
 # Package-specific imports
 from camera import Camera 
 from utils import *
 from YoloVideo import YoloVideo
 
+# Threading variables
+data_lock = threading.Lock()
+ACTIVE_YOLO_THREAD = False
+
+camera_dictionary = {}
+current_camera = 0
+camera_dictionary[current_camera] = Camera(current_camera)
+yolo_detection_algo = YoloVideo(initialize_yolo())
+
 # Main Flask used for routing.
 app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-camera_dictionary = {}
-current_camera = 0
-camera_dictionary[0] = Camera(0)
-yolo_detection_algo = YoloVideo(initialize_yolo())
-
-
 def __perform_detection(frame):
-	print('Starting')
-	yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
-	print('Intersections')
-	numCars = yolo_detection_algo.detect_intersections()	
-	print('Number of Cars Detected: {}'.format(numCars))
-	if numCars >= 1:
-		print('CARS DETECTED')
+	global ACTIVE_THREAD
+	with data_lock:
+		print('Starting')
+		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
+		print('Intersections')
+		numCars = yolo_detection_algo.detect_intersections()	
+		print('Number of Cars Detected: {}'.format(numCars))
+	ACTIVE_YOLO_THREAD = False
 
 def __get_frames():
 	"""
 		Generator function to get frames constantly to the frontend.
 	"""
-	counter = 0
+	global thread, ACTIVE_THREAD
 	for frame in camera_dictionary[current_camera]:
-		# TODO: Kickoff Yolo detection
-		if counter % 300 == 0 and camera_dictionary[current_camera].ROI:
-			__perform_detection(frame)			
-	
+		roi = camera_dictionary[current_camera].ROI
+		if roi and not ACTIVE_THREAD:
+			thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)			
+			thread.start()
+			ACTIVE_YOLO_THREAD = True
+
 		yield(prepare_frame_for_display(frame, current_camera))
-		counter += 1
 
 @app.route('/')
 def show_stream():
@@ -135,4 +142,4 @@ def remove_camera():
 	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", debug=True)
+	app.run(host="0.0.0.0", debug=False)

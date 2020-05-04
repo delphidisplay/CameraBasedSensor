@@ -41,6 +41,7 @@ class Camera:
 		""" 
 			Given a camera url, build a stream object and get the dimensions of it. 
 		"""
+
 		# Build Stream
 		self.VS = VideoStream(src=camera_url).start()
 		
@@ -87,7 +88,7 @@ if __name__ == '__main__':
 	sample = Camera(url = 0)
 	i = 0
 	for frame in sample:
-		if i > 1:
+		if i > 3000:
 			break
 		print(frame)
 		i += 1
