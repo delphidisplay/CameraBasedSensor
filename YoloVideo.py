@@ -162,10 +162,9 @@ class YoloVideo:
 					if LABELS[classIDs[i]] == "car" or LABELS[classIDs[i] == "truck"]:
 						carAmount += 1
 
-			carsAmount = str(carAmount) + " vehicles in ROI"
-			return carsAmount
-		
-		
+			#carsAmount = str(carAmount) + " vehicles in ROI"
+			return carAmount
+		return 0		
 			
 '''
 if __name__ == "__main__":
