@@ -2,10 +2,12 @@
 from flask import Flask, request, render_template, Response, flash
 from datetime import datetime
 import cv2
+import asyncio
 
 # Package-specific imports
 from camera import Camera 
-from frontend_utils import *
+from utils import *
+from YoloVideo import YoloVideo
 
 # Main Flask used for routing.
 app = Flask(__name__)
@@ -15,12 +17,21 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 camera_dictionary = {}
 current_camera = 0
 camera_dictionary[0] = Camera(0)
+#yolo_detection_algo = YoloVideo(initialize_yolo())
 
 def __get_frames():
 	"""
 		Generator function to get frames constantly to the frontend.
 	"""
 	for frame in camera_dictionary[current_camera]:
+		# TODO: Kickoff Yolo detection
+		"""if camera_dictionary[current_camera].ROI:
+			yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
+			numCars = yolo_detection_algo.detect_intersections()	
+			print('Number of Cars Detected: {}'.format(numCars))
+			if numCars >= 1:
+				print('CARS DETECTED')
+		"""
 		yield(prepare_frame_for_display(frame, current_camera))
 
 @app.route('/')
@@ -35,7 +46,8 @@ def stream_feed():
 	"""
 		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
 	"""
-	return Response(__get_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+	loop = asyncio.get_event_loop()
+	return Response(loop.run_until_complete(__get_frames()), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/record_roi', methods=['POST'])
 def record_roi():

@@ -2,7 +2,7 @@
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
 
-def intersection_of_polygons(ROI, BBOX, thresh=0.7, debug=True, showPlot=True, figure="1"):
+def intersection_of_polygons(ROI, BBOX, thresh=0.7, debug=False, showPlot=False, figure="1"):
 	"""
 		Measures the intersection of 2 polygons (ROI and BBOX) from their coordinates and determines whether the BBOX
 		is within the ROI or not based on the intersection percentage relative to both the ROI and BBOX.

@@ -37,3 +37,9 @@ def prepare_frame_for_display(frame,camera_name="NOT_SPECIFIED"):
 	_,frame = cv2.imencode(".jpg", frame)
 	return b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +  bytearray(frame) + b'\r\n' 
 
+def initialize_yolo():
+	print("[INFO] loading YOLO from disk...")
+	configPath = "yolo-coco/yolov3.cfg"
+	weightsPath = "yolo-coco/yolov3.weights"
+	net =  cv2.dnn.readNetFromDarknet(configPath, weightsPath)
+	return net

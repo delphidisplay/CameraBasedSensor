@@ -16,6 +16,7 @@ class Camera:
 		"""
 		self.url = url
 		self.ROI = None
+		#self.frame_delay = 5
 		self.initialize_video_stream(url)
 
 	def __iter__(self):
