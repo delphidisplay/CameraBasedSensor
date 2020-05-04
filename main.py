@@ -25,11 +25,11 @@ app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 def __perform_detection(frame):
-	global ACTIVE_THREAD
+	global ACTIVE_YOLO_THREAD
 	with data_lock:
-		print('Starting')
+		#print('Starting')
 		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
-		print('Intersections')
+		#print('Intersections')
 		numCars = yolo_detection_algo.detect_intersections()	
 		print('Number of Cars Detected: {}'.format(numCars))
 	ACTIVE_YOLO_THREAD = False
@@ -38,10 +38,10 @@ def __get_frames():
 	"""
 		Generator function to get frames constantly to the frontend.
 	"""
-	global thread, ACTIVE_THREAD
+	global thread, ACTIVE_YOLO_THREAD
 	for frame in camera_dictionary[current_camera]:
 		roi = camera_dictionary[current_camera].ROI
-		if roi and not ACTIVE_THREAD:
+		if roi and not ACTIVE_YOLO_THREAD:
 			thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)			
 			thread.start()
 			ACTIVE_YOLO_THREAD = True
