@@ -52,8 +52,9 @@ def __log_car_detection(numCars, prev_cars):
         json_message[status] = "001"
         camera_cars_count[current_camera] += 1
 
-        with open('log.txt', 'a') as file:
-            file.write(json.dumps(json_message))
+        print(json_message)
+        #with open('log.txt', 'a') as file:
+        #    file.write(json.dumps(json_message))
 
 
 
@@ -61,8 +62,9 @@ def __log_car_detection(numCars, prev_cars):
         prev_cars = numCars
         ## TODO: Log car left
         json_message[status] = "002"
-        with open('log.txt', 'a') as file:
-            file.write(json.dumps(json_message))
+        print(json_message)
+        #with open('log.txt', 'a') as file:
+        #    file.write(json.dumps(json_message))
 
 
 def __perform_detection(frame):
