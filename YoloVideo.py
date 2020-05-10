@@ -4,7 +4,6 @@ import cv2
 from find_intersect import intersection_of_polygons
 import matplotlib.pyplot as plt
 
-#Added a comment just to get in the flow
 
 class YoloVideo:
 	"""
