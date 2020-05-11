@@ -42,7 +42,7 @@ def __log_car_detection(numCars, prev_cars):
         "camera_id":current_camera,
 	    "timestamp":s1,
 	    "vehicle_id":camera_cars_count[current_camera],
-	     "status": "000"
+	    "status": "000"
 
     }
 
@@ -68,6 +68,7 @@ def __log_car_detection(numCars, prev_cars):
 
 
 def __perform_detection(frame):
+    global prev_cars
     global ACTIVE_YOLO_THREAD
     with data_lock:
         #print('Starting')
