@@ -11,12 +11,11 @@ from camera import Camera
 from utils import *
 from YoloVideo import YoloVideo
 
-
-
 # Threading variables
 data_lock = threading.Lock()
 ACTIVE_YOLO_THREAD = False
 
+# Global variables
 camera_dictionary = {}
 current_camera = 0 #'rtsp://admin:12345@172.16.15.12'
 camera_dictionary[current_camera] = Camera(current_camera)
@@ -26,30 +25,25 @@ yolo_detection_algo = YoloVideo(initialize_yolo())
 prev_cars = 0
 camera_cars_count = [0]*len(camera_dictionary)
 
-
 # Main Flask used for routing.
 app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-
-
-'''
-Function to print out JSON messages to terminal whenever a car
-enters or leaves ROI
-'''
 def __log_car_detection(numCars):
+	'''
+		Function to print out JSON messages to terminal whenever a car
+		enters or leaves ROI
+	'''
     global prev_cars
 
-    now = datetime.now()
-    s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
+    s1 = datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
 
     json_message = {
         "camera_id":current_camera,
 	    "timestamp":s1,
 	    "vehicle_id":camera_cars_count[current_camera],
 	    "status": "000"
-
     }
 
     if not numCars:
@@ -60,7 +54,7 @@ def __log_car_detection(numCars):
         return 0
 
     if prev_cars < numCars:
-        ## TODO: Log Car arrived
+		# This means that a new car entered.
         prev_cars = numCars
         json_message["status"] = "001"
         camera_cars_count[current_camera] += 1
@@ -69,20 +63,25 @@ def __log_car_detection(numCars):
         #with open('log.txt', 'a') as file:
         #    file.write(json.dumps(json_message))
 
-
-
     elif prev_cars > numCars:
+		# This means that a car left
         prev_cars = numCars
-        ## TODO: Log car left
         json_message["status"] = "002"
+
         print(json_message)
         #with open('log.txt', 'a') as file:
         #    file.write(json.dumps(json_message))
 
 
 def __perform_detection(frame):
+	"""
+		Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
+	"""
+
+
     global prev_cars
     global ACTIVE_YOLO_THREAD
+
     with data_lock:
         #print('Starting')
         yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
@@ -96,11 +95,13 @@ def __perform_detection(frame):
 
 def __get_frames():
     """
-        Generator function to get frames constantly to the frontend.
+        Generator function to get frames constantly to the frontend and to kickstart the detection on each frame.
     """
     global thread, ACTIVE_YOLO_THREAD
     for frame in camera_dictionary[current_camera]:
         roi = camera_dictionary[current_camera].ROI
+		
+		# Check to make sure that the current camera has a specified ROI and that there's no thread running.
         if roi and not ACTIVE_YOLO_THREAD:
             thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
             thread.start()
