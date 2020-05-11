@@ -5,7 +5,6 @@ import cv2
 import threading
 import atexit
 from datetime import datetime
-import json
 
 # Package-specific imports
 from camera import Camera
@@ -33,7 +32,14 @@ app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-def __log_car_detection(numCars, prev_cars):
+
+
+'''
+Function to print out JSON messages to terminal whenever a car
+enters or leaves ROI
+'''
+def __log_car_detection(numCars):
+    global prev_cars
 
     now = datetime.now()
     s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
@@ -49,7 +55,7 @@ def __log_car_detection(numCars, prev_cars):
     if not numCars:
         print("numCars is None")
         return 0
-    elif not prev_cars:
+    elif prev_cars is None:
         print("prev_cars is none")
         return 0
 
@@ -82,7 +88,8 @@ def __perform_detection(frame):
         yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
         #print('Intersections')
         numCars = yolo_detection_algo.detect_intersections()
-        prev_cars = __log_car_detection(numCars, prev_cars)
+        print(prev_cars)
+        __log_car_detection(numCars)
         print('Number of Cars Detected: {}'.format(numCars))
     ACTIVE_YOLO_THREAD = False
 
