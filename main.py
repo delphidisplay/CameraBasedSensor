@@ -46,6 +46,13 @@ def __log_car_detection(numCars, prev_cars):
 
     }
 
+    if not numCars:
+        print("numCars is None")
+        break
+    elif not prev_cars:
+        print("prev_cars is none")
+        break
+
     if prev_cars < numCars:
         ## TODO: Log Car arrived
         prev_cars = numCars
