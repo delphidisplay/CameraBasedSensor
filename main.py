@@ -49,7 +49,7 @@ def __log_car_detection(numCars, prev_cars):
     if prev_cars < numCars:
         ## TODO: Log Car arrived
         prev_cars = numCars
-        json_message[status] = "001"
+        json_message["status"] = "001"
         camera_cars_count[current_camera] += 1
 
         print(json_message)
@@ -61,7 +61,7 @@ def __log_car_detection(numCars, prev_cars):
     elif prev_cars > numCars:
         prev_cars = numCars
         ## TODO: Log car left
-        json_message[status] = "002"
+        json_message["status"] = "002"
         print(json_message)
         #with open('log.txt', 'a') as file:
         #    file.write(json.dumps(json_message))
