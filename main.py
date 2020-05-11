@@ -4,11 +4,14 @@ from datetime import datetime
 import cv2
 import threading
 import atexit
+from datetime import datetime
 
 # Package-specific imports
-from camera import Camera 
+from camera import Camera
 from utils import *
 from YoloVideo import YoloVideo
+
+
 
 # Threading variables
 data_lock = threading.Lock()
@@ -20,21 +23,76 @@ camera_dictionary[current_camera] = Camera(current_camera)
 #second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 #camera_dictionary[second_camera] = Camera(second_camera)
 yolo_detection_algo = YoloVideo(initialize_yolo())
+prev_cars = 0
+camera_cars_count = [0]*len(camera_dictionary)
+
 
 # Main Flask used for routing.
 app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
+
+
+'''
+Function to print out JSON messages to terminal whenever a car
+enters or leaves ROI
+'''
+def __log_car_detection(numCars):
+    global prev_cars
+
+    now = datetime.now()
+    s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
+
+    json_message = {
+        "camera_id":current_camera,
+	    "timestamp":s1,
+	    "vehicle_id":camera_cars_count[current_camera],
+	    "status": "000"
+
+    }
+
+    if not numCars:
+        print("numCars is None")
+        return 0
+    elif prev_cars is None:
+        print("prev_cars is none")
+        return 0
+
+    if prev_cars < numCars:
+        ## TODO: Log Car arrived
+        prev_cars = numCars
+        json_message["status"] = "001"
+        camera_cars_count[current_camera] += 1
+
+        print(json_message)
+        #with open('log.txt', 'a') as file:
+        #    file.write(json.dumps(json_message))
+
+
+
+    elif prev_cars > numCars:
+        prev_cars = numCars
+        ## TODO: Log car left
+        json_message["status"] = "002"
+        print(json_message)
+        #with open('log.txt', 'a') as file:
+        #    file.write(json.dumps(json_message))
+
+
 def __perform_detection(frame):
+    global prev_cars
     global ACTIVE_YOLO_THREAD
     with data_lock:
         #print('Starting')
         yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
         #print('Intersections')
-        numCars = yolo_detection_algo.detect_intersections()    
+        numCars = yolo_detection_algo.detect_intersections()
+        print(prev_cars)
+        __log_car_detection(numCars)
         print('Number of Cars Detected: {}'.format(numCars))
     ACTIVE_YOLO_THREAD = False
+
 
 def __get_frames():
     """
@@ -44,7 +102,7 @@ def __get_frames():
     for frame in camera_dictionary[current_camera]:
         roi = camera_dictionary[current_camera].ROI
         if roi and not ACTIVE_YOLO_THREAD:
-            thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)            
+            thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
             thread.start()
             ACTIVE_YOLO_THREAD = True
 
@@ -114,7 +172,7 @@ def add_camera():
     camera_url = request.form["stream_url"]
 
     # Special case which indicates the computer's webcam
-    if camera_url == "0": 
+    if camera_url == "0":
         camera_url = 0
 
     if camera_name not in camera_dictionary:
@@ -131,7 +189,7 @@ def remove_camera():
     """
     camera_name = request.form["remove_name"]
 
-    if camera_name in camera_dictionary: 
+    if camera_name in camera_dictionary:
         camera_dictionary[camera_name].stop_video_stream()
         del(camera_dictionary[camera_name])
 
