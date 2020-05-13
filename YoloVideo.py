@@ -24,9 +24,17 @@ class YoloVideo:
 		self.threshold = 0.3
 		self.debug = False
 
-	def set_frame_and_roi(self,frame,roi):
+	def set_frame_and_roi(self,frame,camera):
 		self.frame = frame
-		self.ROI = roi
+
+		# Ratios needed to resize the ROI coordinates to match the original frame
+		x_ratio = camera.frontend_ratio[0]* camera.prepare_ratio[0]
+		y_ratio = camera.frontend_ratio[1]* camera.prepare_ratio[1]
+
+		self.ROI = []
+
+		for coord in camera.ROI:
+			self.ROI.append([coord[0]/x_ratio,coord[1]/y_ratio])
 
 	def get_yolo_labels(self):
 		"""

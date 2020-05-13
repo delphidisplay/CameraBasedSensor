@@ -84,7 +84,7 @@ def __perform_detection(frame):
 
 	with data_lock:
 		#print('Starting')
-		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
+		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
 		#print('Intersections')
 		numCars = yolo_detection_algo.detect_intersections()
 		print(prev_cars)
@@ -128,19 +128,12 @@ def record_roi():
 	"""
 		Updates the current camera stream's ROI coordinates.
 	"""
-
-	# TODO: Make the x and y coordinates relative to the frame size of the input to the YOLO model.
-
 	print(request.form)
-
-	# Ratios needed to resize the ROI coordinates to match the original frame
-	x_ratio = camera_dictionary[current_camera].prepare_ratio[0]*camera_dictionary[current_camera].frontend_ratio[0]
-	y_ratio = camera_dictionary[current_camera].prepare_ratio[1]*camera_dictionary[current_camera].frontend_ratio[1]
 
 	roi_coord = []
 	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
 		x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
-		roi_coord.append([int(x_coord)/x_ratio, int(y_coord)/y_ratio])
+		roi_coord.append([int(x_coord), int(y_coord)])
 
 	print(roi_coord)
 
