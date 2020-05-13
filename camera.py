@@ -8,6 +8,8 @@ class Camera:
 		ROI: A list containing all of the coordinates of the Bounding Box.
 		VS: A VideoStream object that streams from the camera url
 		dimensions: A list containing the width and height of each frame we would receive.
+		prepare_ratio: A list containing the ratio of the original frame to the frame that's resized when the frame is preparing for it to be displayed.
+		frontend_ratio: A list containing the ratio of the original frame to the frame that's resized when the frame is displayed on the frontend.
 	"""
 
 	def __init__(self, url):
@@ -50,7 +52,9 @@ class Camera:
 		assert sample_frame is not None
 
 		# Set the width and height.
-		self.dimensions = sample_frame.shape		
+		self.dimensions = sample_frame.shape
+		self.prepare_ratio = [800/self.dimensions[0],1]	
+		self.frontend_ratio = [450/(self.dimensions[0]*self.prepare_ratio[0]),800/(self.dimensions[1]*self.prepare_ratio[1])]
 
 	def stop_video_stream(self):
 		""" 

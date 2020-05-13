@@ -35,42 +35,42 @@ def __log_car_detection(numCars):
 		Function to print out JSON messages to terminal whenever a car
 		enters or leaves ROI
 	'''
-    global prev_cars
+	global prev_cars
 
-    s1 = datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+	s1 = datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
 
-    json_message = {
-        "camera_id":current_camera,
-	    "timestamp":s1,
-	    "vehicle_id":camera_cars_count[current_camera],
-	    "status": "000"
-    }
+	json_message = {
+		"camera_id":current_camera,
+		"timestamp":s1,
+		"vehicle_id":camera_cars_count[current_camera],
+		"status": "000"
+	}
 
-    if not numCars:
-        print("numCars is None")
-        return 0
-    elif prev_cars is None:
-        print("prev_cars is none")
-        return 0
+	if not numCars:
+		print("numCars is None")
+		return 0
+	elif prev_cars is None:
+		print("prev_cars is none")
+		return 0
 
-    if prev_cars < numCars:
+	if prev_cars < numCars:
 		# This means that a new car entered.
-        prev_cars = numCars
-        json_message["status"] = "001"
-        camera_cars_count[current_camera] += 1
+		prev_cars = numCars
+		json_message["status"] = "001"
+		camera_cars_count[current_camera] += 1
 
-        print(json_message)
-        #with open('log.txt', 'a') as file:
-        #    file.write(json.dumps(json_message))
+		print(json_message)
+		#with open('log.txt', 'a') as file:
+		#	file.write(json.dumps(json_message))
 
-    elif prev_cars > numCars:
+	elif prev_cars > numCars:
 		# This means that a car left
-        prev_cars = numCars
-        json_message["status"] = "002"
+		prev_cars = numCars
+		json_message["status"] = "002"
 
-        print(json_message)
-        #with open('log.txt', 'a') as file:
-        #    file.write(json.dumps(json_message))
+		print(json_message)
+		#with open('log.txt', 'a') as file:
+		#	file.write(json.dumps(json_message))
 
 
 def __perform_detection(frame):
@@ -79,129 +79,133 @@ def __perform_detection(frame):
 	"""
 
 
-    global prev_cars
-    global ACTIVE_YOLO_THREAD
+	global prev_cars
+	global ACTIVE_YOLO_THREAD
 
-    with data_lock:
-        #print('Starting')
-        yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
-        #print('Intersections')
-        numCars = yolo_detection_algo.detect_intersections()
-        print(prev_cars)
-        __log_car_detection(numCars)
-        print('Number of Cars Detected: {}'.format(numCars))
-    ACTIVE_YOLO_THREAD = False
+	with data_lock:
+		#print('Starting')
+		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera].ROI)
+		#print('Intersections')
+		numCars = yolo_detection_algo.detect_intersections()
+		print(prev_cars)
+		__log_car_detection(numCars)
+		print('Number of Cars Detected: {}'.format(numCars))
+	ACTIVE_YOLO_THREAD = False
 
 
 def __get_frames():
-    """
-        Generator function to get frames constantly to the frontend and to kickstart the detection on each frame.
-    """
-    global thread, ACTIVE_YOLO_THREAD
-    for frame in camera_dictionary[current_camera]:
-        roi = camera_dictionary[current_camera].ROI
+	"""
+		Generator function to get frames constantly to the frontend and to kickstart the detection on each frame.
+	"""
+	global thread, ACTIVE_YOLO_THREAD
+	for frame in camera_dictionary[current_camera]:
+		roi = camera_dictionary[current_camera].ROI
 		
 		# Check to make sure that the current camera has a specified ROI and that there's no thread running.
-        if roi and not ACTIVE_YOLO_THREAD:
-            thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
-            thread.start()
-            ACTIVE_YOLO_THREAD = True
+		if roi and not ACTIVE_YOLO_THREAD:
+			thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
+			thread.start()
+			ACTIVE_YOLO_THREAD = True
 
-        yield(prepare_frame_for_display(frame, current_camera))
+		yield(prepare_frame_for_display(frame, current_camera))
 
 @app.route('/')
 def show_stream():
-    """
-        Function called when Flask boots up for the first time.
-    """
-    return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
+	"""
+		Function called when Flask boots up for the first time.
+	"""
+	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 @app.route("/stream_feed")
 def stream_feed():
-    """
-        Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
-    """
-    return Response(__get_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+	"""
+		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
+	"""
+	return Response(__get_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/record_roi', methods=['POST'])
 def record_roi():
-    """
-        Updates the current camera stream's ROI coordinates.
-    """
+	"""
+		Updates the current camera stream's ROI coordinates.
+	"""
 
-    # TODO: Make the x and y coordinates relative to the frame size of the input to the YOLO model.
+	# TODO: Make the x and y coordinates relative to the frame size of the input to the YOLO model.
 
-    print(request.form)
+	print(request.form)
 
-    roi_coord = []
-    for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
-        x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
-        roi_coord.append([int(x_coord), int(y_coord)])
+	# Ratios needed to resize the ROI coordinates to match the original frame
+	x_ratio = camera_dictionary[current_camera].prepare_ratio[0]*camera_dictionary[current_camera].frontend_ratio[0]
+	y_ratio = camera_dictionary[current_camera].prepare_ratio[1]*camera_dictionary[current_camera].frontend_ratio[1]
 
-    print(roi_coord)
+	roi_coord = []
+	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
+		x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
+		roi_coord.append([int(x_coord)/x_ratio, int(y_coord)/y_ratio])
 
-    if is_valid_roi(roi_coord): # validate the ROI coordinates
-        #print("VALID ROI SPECIFIED")
-        camera_dictionary[current_camera].set_roi_coordinates(roi_coord)
-    else:
-        print("INVALID ROI: MUST SPECIFY POLYGON")
+	print(roi_coord)
 
-    return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
+	if is_valid_roi(roi_coord): # validate the ROI coordinates
+		#print("VALID ROI SPECIFIED")
+		camera_dictionary[current_camera].set_roi_coordinates(roi_coord)
+	else:
+		print("INVALID ROI: MUST SPECIFY POLYGON")
+
+	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 @app.route('/choose_camera', methods=['POST'])
 def choose_camera():
-    """
-        Switches the camera stream that's being displayed on the frontend.
-    """
-    global current_camera
-    current_camera = request.form["camera_view"]
+	"""
+		Switches the camera stream that's being displayed on the frontend.
+	"""
+	global current_camera
+	current_camera = request.form["camera_view"]
 
-    if current_camera == '0':
-        current_camera = 0
+	if current_camera == '0':
+		current_camera = 0
 
-    print("CURRENT CAMERA IS NOW {}".format(current_camera))
+	print("CURRENT CAMERA IS NOW {}".format(current_camera))
 
-    return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
+	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 @app.route('/add_camera', methods=['POST'])
 def add_camera():
-    """
-        Adds a new camera to the system with the user specified camera url.
-    """
+	"""
+		Adds a new camera to the system with the user specified camera url.
+	"""
 
-    camera_name = request.form["camera_name"]
-    camera_url = request.form["stream_url"]
+	camera_name = request.form["camera_name"]
+	camera_url = request.form["stream_url"]
 
-    # Special case which indicates the computer's webcam
-    if camera_url == "0":
-        camera_url = 0
+	# Special case which indicates the computer's webcam
+	if camera_url == "0":
+		camera_url = 0
 
-    if camera_name not in camera_dictionary:
-        camera_dictionary[camera_name] = Camera(camera_url)
-    else:
-        print("ERROR: CAMERA EXISTS")
+	if camera_name not in camera_dictionary:
+		camera_dictionary[camera_name] = Camera(camera_url)
+	else:
+		print("ERROR: CAMERA EXISTS")
 
-    return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
+	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 @app.route('/remove_camera', methods=['POST'])
 def remove_camera():
-    """
-        Removes a camera from the system and ends the camera's video stream.
-    """
-    camera_name = request.form["remove_name"]
+	"""
+		Removes a camera from the system and ends the camera's video stream.
+	"""
+	camera_name = request.form["remove_name"]
 
-    if camera_name in camera_dictionary:
-        camera_dictionary[camera_name].stop_video_stream()
-        del(camera_dictionary[camera_name])
+	if camera_name in camera_dictionary:
+		camera_dictionary[camera_name].stop_video_stream()
+		del(camera_dictionary[camera_name])
 
-        # If the camera being removed was the current camera, set a new camera stream to display onto the frontend
-        if camera_dictionary and current_camera == camera_name:
-            current_camera = next(camera_dictionary)
+		# If the camera being removed was the current camera, set a new camera stream to display onto the frontend
+		if camera_dictionary and current_camera == camera_name:
+			current_camera = next(camera_dictionary)
 
-    else:
-        print("INVALID ENTRY: CAMERA NAME TO REMOVE DOES NOT EXIST")
+	else:
+		print("INVALID ENTRY: CAMERA NAME TO REMOVE DOES NOT EXIST")
 
-    return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
+	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False)
+	app.run(host="0.0.0.0", debug=False)
