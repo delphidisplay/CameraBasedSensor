@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 class YoloVideo:
 	"""
-	detection model to identify cars and trucks within a specific region of interest (ROI)
+		Detection model to identify cars and trucks within a specific region of interest (ROI)
 	"""
 
 	def __init__(self, net):
