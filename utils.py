@@ -32,7 +32,9 @@ def is_valid_roi(nested_list):
 
 def prepare_frame_for_display(frame,camera_name="NOT_SPECIFIED"):
 	""" Takes in a frame, converts it into bytes as flask requires it and returns the encoded frame. """
+	#print(frame.shape)
 	frame = resize(frame, width=800)
+	#print(frame.shape)
 	frame = add_frame_overlay(frame,camera_name)
 	_,frame = cv2.imencode(".jpg", frame)
 	return b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +  bytearray(frame) + b'\r\n' 
