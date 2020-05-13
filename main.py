@@ -22,8 +22,8 @@ camera_dictionary[current_camera] = Camera(current_camera)
 #second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 #camera_dictionary[second_camera] = Camera(second_camera)
 yolo_detection_algo = YoloVideo(initialize_yolo())
-prev_cars = 0
-camera_cars_count = [0]*len(camera_dictionary)
+first = 0
+prev = 0
 
 # Main Flask used for routing.
 app = Flask(__name__)
@@ -31,46 +31,56 @@ app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 def __log_car_detection(numCars):
-	'''
-		Function to print out JSON messages to terminal whenever a car
-		enters or leaves ROI
-	'''
-	global prev_cars
+    global first
+    global prev
 
-	s1 = datetime.now().strftime("%Y/%m/%d, %H:%M:%S")
+    #Gets current time
+    now = datetime.now()
+    s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
 
-	json_message = {
-		"camera_id":current_camera,
-		"timestamp":s1,
-		"vehicle_id":camera_cars_count[current_camera],
-		"status": "000"
-	}
+    camera =  camera_dictionary[current_camera]
 
-	if not numCars:
-		print("numCars is None")
-		return 0
-	elif prev_cars is None:
-		print("prev_cars is none")
-		return 0
+    json_message = {
+        "camera_id": current_camera,
+	    "timestamp":s1,
+	    "vehicle_id": camera.car_count,
+	    "status": "000"
 
-	if prev_cars < numCars:
-		# This means that a new car entered.
-		prev_cars = numCars
-		json_message["status"] = "001"
-		camera_cars_count[current_camera] += 1
+    }
 
-		print(json_message)
-		#with open('log.txt', 'a') as file:
-		#	file.write(json.dumps(json_message))
+    if numCars is None or prev is None or first is None:
+        print(json_message)
+        return
 
-	elif prev_cars > numCars:
-		# This means that a car left
-		prev_cars = numCars
-		json_message["status"] = "002"
+    if numCars == prev and prev < first:
+        #Car left ROI
+        first = prev
+        prev = numCars
+        json_message["status"] = "001"
+        camera.car_count += 1
 
-		print(json_message)
-		#with open('log.txt', 'a') as file:
-		#	file.write(json.dumps(json_message))
+        print(json_message)
+        #with open('log.txt', 'a') as file:
+        #    file.write(json.dumps(json_message))
+
+    elif numCars == prev and prev > first:
+        #Car entered ROI
+        first = prev
+        prev = numCars
+        json_message["status"] = "002"
+
+        print(json_message)
+        #with open('log.txt', 'a') as file:
+        #    file.write(json.dumps(json_message))
+
+
+
+def __test_json_messages():
+    numCars = 0
+    for i in range(10):
+        __log_car_detection(numCars)
+        print(i)
+        time.sleep(5)
 
 
 def __perform_detection(frame):
@@ -87,7 +97,6 @@ def __perform_detection(frame):
 		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
 		#print('Intersections')
 		numCars = yolo_detection_algo.detect_intersections()
-		print(prev_cars)
 		__log_car_detection(numCars)
 		print('Number of Cars Detected: {}'.format(numCars))
 	ACTIVE_YOLO_THREAD = False
@@ -100,7 +109,7 @@ def __get_frames():
 	global thread, ACTIVE_YOLO_THREAD
 	for frame in camera_dictionary[current_camera]:
 		roi = camera_dictionary[current_camera].ROI
-		
+
 		# Check to make sure that the current camera has a specified ROI and that there's no thread running.
 		if roi and not ACTIVE_YOLO_THREAD:
 			thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
