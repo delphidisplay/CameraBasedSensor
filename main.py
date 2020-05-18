@@ -12,8 +12,8 @@ import time
 from camera import Camera
 from utils import *
 
-webcam = False # easier selection for webcam
-detectModel = "tpu" # choose tpu, yolov3, or yolov3-tiny
+webcam = True # easier selection for webcam
+detectModel = "yolov3-tiny" # choose tpu, yolov3, or yolov3-tiny
 
 if detectModel == "yolov3-tiny" or detectModel == "yolov3":
     from YoloVideo import YoloVideo
