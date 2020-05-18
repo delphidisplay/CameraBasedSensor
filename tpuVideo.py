@@ -5,13 +5,16 @@ from find_intersect import intersection_of_polygons
 import matplotlib.pyplot as plt
 
 from detect_image import main_detection, load_labels
+from tpu_tiny_yolo_inference import image_inf
+from tpu_utils_tiny_yolo import get_anchors, get_classes
+
 
 class YoloVideo:
   """
     Detection model to identify cars and trucks within a specific region of interest (ROI)
   """
 
-  def __init__(self, net):
+  def __init__(self, net, modelType):
     """
       self.frame: frame from stream
       self.ROI: nested list defining region of intereest in frame in which we detect vehicles
@@ -26,6 +29,9 @@ class YoloVideo:
     self.pickedClass = ['car', 'motorcycle', 'truck', 'bus'] # detection classes to keep
     self.debug = False
     self.detection_info = None
+    self.modelType = modelType # choose tiny-yolo or mobilenet
+    self.labels = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
+
 
   def set_frame_and_roi(self,frame,camera):
     self.frame = frame
@@ -68,9 +74,20 @@ class YoloVideo:
       returns layer outputs, which contains class id and confidence probabilities
     """
 
-    objs, labeledImage = main_detection(self.net, 
-            labels=self.get_yolo_labels(), image=self.frame, pickedClass=self.pickedClass,
+    if self.modelType == "tpu-mobilenet":
+        objs, labeledImage = main_detection(self.net, 
+            labels=self.labels, image=self.frame, pickedClass=self.pickedClass,
             threshold=self.confidence, labeledOutputImage=False)
+
+    elif self.modelType == "tpu-tiny-yolo": 
+        anchorsPath = "models/tiny_yolo_anchors.txt"
+        classesPath = "models/coco.names"
+
+        anchors = get_anchors(anchorsPath)
+        classes = get_classes(classesPath)
+        
+        objs, labeledImage = image_inf(self.net, anchors, 
+            self.frame, classes, self.confidence, labeledOutputImage=False)
 
     return objs
 
@@ -134,7 +151,7 @@ class YoloVideo:
     self.extract_detection_information()
 
     idxs = self.apply_suppression()
-    LABELS = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
+    LABELS = self.labels
 
     boxes = self.detection_info[0]
     confidences = self.detection_info[1]

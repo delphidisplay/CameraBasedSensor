@@ -54,10 +54,16 @@ def initialize_yolo(modelType="yolov3-tiny"):
     return net
 
 
-def initialize_tpu():
+def initialize_tpu(modelType="tpu-mobilenet"):
     """Loads tflite model into tpu and returns object for tpu inference"""
     print("[INFO] loading tflite model into TPU...")
-    model = "models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite"
+    
+    if modelType == "tpu-mobilenet":
+        model = "models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite"
+    elif modelType == "tpu-tiny-yolo":
+        model = "models/quant_coco-tiny-v3-relu_edgetpu.tflite"
+
     interpreter = make_interpreter(model)
+    interpreter.allocate_tensors()
     return interpreter
 

@@ -12,16 +12,16 @@ import time
 from camera import Camera
 from utils import *
 
-webcam = True # easier selection for webcam
-detectModel = "yolov3-tiny" # choose tpu, yolov3, or yolov3-tiny
+webcam = False # easier selection for webcam
+detectModel = "tpu-tiny-yolo" # choose tpu-tiny-yolo, tpu-mobilenet, yolov3, or yolov3-tiny
 
 if detectModel == "yolov3-tiny" or detectModel == "yolov3":
     from YoloVideo import YoloVideo
     detection_algo = YoloVideo(initialize_yolo(modelType=detectModel))
 
-elif detectModel == "tpu":
+elif detectModel == "tpu-tiny-yolo" or detectModel == "tpu-mobilenet":
     from tpuVideo import YoloVideo
-    detection_algo = YoloVideo(initialize_tpu())
+    detection_algo = YoloVideo(initialize_tpu(modelType=detectModel), modelType=detectModel)
 
 # Threading variables
 data_lock = threading.Lock()

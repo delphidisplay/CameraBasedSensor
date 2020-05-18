@@ -130,12 +130,12 @@ def main():
 
 def main_detection(interpreter, labels, image, pickedClass, threshold=0.25, labeledOutputImage=True):
   #interpreter = make_interpreter(model)
-  interpreter.allocate_tensors()
+  #interpreter.allocate_tensors()
 
   image = Image.fromarray(image)
   scale = detect.set_input(interpreter, image.size,
                            lambda size: image.resize(size, Image.ANTIALIAS))
-  labels = load_labels(labels) if labels else {}
+  #labels = load_labels(labels) if labels else {}
   start = time.perf_counter()
   interpreter.invoke()
   inference_time = time.perf_counter() - start
