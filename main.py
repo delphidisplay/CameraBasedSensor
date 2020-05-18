@@ -12,11 +12,16 @@ import time
 from camera import Camera
 from utils import *
 
-#from YoloVideo import YoloVideo # for cpu
-#detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny")) # for cpu
+webcam = False # easier selection for webcam
+detectModel = "tpu" # choose tpu, yolov3, or yolov3-tiny
 
-from tpuVideo import YoloVideo # for tpu
-detection_algo = YoloVideo(initialize_tpu()) # for tpu
+if detectModel == "yolov3-tiny" or detectModel == "yolov3":
+    from YoloVideo import YoloVideo
+    detection_algo = YoloVideo(initialize_yolo(modelType=detectModel))
+
+elif detectModel == "tpu":
+    from tpuVideo import YoloVideo
+    detection_algo = YoloVideo(initialize_tpu())
 
 # Threading variables
 data_lock = threading.Lock()
@@ -25,12 +30,15 @@ ACTIVE_YOLO_THREAD = False
 # Global variables
 camera_dictionary = {}
 
-#first_camera = 0 
-first_camera = 'rtsp://admin:12345@172.16.15.12'
-camera_dictionary[first_camera] = Camera(first_camera)
+if webcam:
+    first_camera = 0 
+    camera_dictionary[first_camera] = Camera(first_camera)
+else:
+    first_camera = 'rtsp://admin:12345@172.16.15.12'
+    camera_dictionary[first_camera] = Camera(first_camera)
 
-second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
-camera_dictionary[second_camera] = Camera(second_camera)
+    second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
+    camera_dictionary[second_camera] = Camera(second_camera)
 
 current_camera = first_camera
 
@@ -155,14 +163,15 @@ def record_roi():
   """
     Updates the current camera stream's ROI coordinates.
   """
-  print(request.form)
+  print("RECEIVED ROI")
+  #print(request.form)
 
   roi_coord = []
   for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
     x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
     roi_coord.append([int(x_coord), int(y_coord)])
 
-  print(roi_coord)
+  #print(roi_coord)
 
   if is_valid_roi(roi_coord): # validate the ROI coordinates
     #print("VALID ROI SPECIFIED")
