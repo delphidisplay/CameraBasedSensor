@@ -6,10 +6,17 @@ import threading
 import atexit
 from datetime import datetime
 
+import time
+
 # Package-specific imports
 from camera import Camera
 from utils import *
-from tpuVideo import YoloVideo
+
+#from YoloVideo import YoloVideo # for cpu
+#detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny")) # for cpu
+
+from tpuVideo import YoloVideo # for tpu
+detection_algo = YoloVideo(initialize_tpu()) # for tpu
 
 # Threading variables
 data_lock = threading.Lock()
@@ -17,8 +24,8 @@ ACTIVE_YOLO_THREAD = False
 
 # Global variables
 camera_dictionary = {}
-#current_camera = 0 
 
+#first_camera = 0 
 first_camera = 'rtsp://admin:12345@172.16.15.12'
 camera_dictionary[first_camera] = Camera(first_camera)
 
@@ -27,11 +34,7 @@ camera_dictionary[second_camera] = Camera(second_camera)
 
 current_camera = first_camera
 
-
 total_cars_count = 0
-
-#yolo_detection_algo = YoloVideo(initialize_yolo())
-tpu_detection_algo = YoloVideo(initialize_tpu())
 
 first = 0
 prev = 0
@@ -103,11 +106,11 @@ def __perform_detection(frame):
   global total_cars_count
 
   with data_lock:
-    #yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
-    #numCars = yolo_detection_algo.detect_intersections()
-    tpu_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
-    numCars = tpu_detection_algo.detect_intersections()
+    detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
+    numCars = detection_algo.detect_intersections() 
     __log_car_detection(numCars)
+    
+    print("Detection Complete", time.strftime('%a %H:%M:%S')) 
     
     if numCars > 0:
       total_cars_count += numCars

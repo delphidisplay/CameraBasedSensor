@@ -4,13 +4,7 @@ import cv2
 from find_intersect import intersection_of_polygons
 import matplotlib.pyplot as plt
 
-from detect_image import main_detection
-
-#show_frame = True
-
-#if show_frame:
-#  cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
-#  cv2.resizeWindow('frame', 1280, 720)
+from detect_image import main_detection, load_labels
 
 class YoloVideo:
   """
@@ -29,6 +23,7 @@ class YoloVideo:
     self.ROI = []
     self.confidence = 0.25
     self.threshold = 0.3
+    self.pickedClass = ['car', 'motorcycle', 'truck', 'bus'] # detection classes to keep
     self.debug = False
     self.detection_info = None
 
@@ -73,13 +68,9 @@ class YoloVideo:
       returns layer outputs, which contains class id and confidence probabilities
     """
 
-    objs, image = main_detection(self.net, 
-            labels=self.get_yolo_labels(), image=self.frame, 
-            threshold=self.confidence, count=1, 
-            output=True)
-
-    #if show_frame:
-    #    cv2.imshow('frame', image)
+    objs, labeledImage = main_detection(self.net, 
+            labels=self.get_yolo_labels(), image=self.frame, pickedClass=self.pickedClass,
+            threshold=self.confidence, labeledOutputImage=False)
 
     return objs
 
@@ -126,13 +117,9 @@ class YoloVideo:
               classIDs.append(classID)
 
     self.detection_info = (boxes,confidences,classIDs)
-    
-    #return (boxes,confidences,classIDs)
 
 
   def apply_suppression(self):
-    #boxes = self.extract_detection_information()[0]
-    #confidences = self.extract_detection_information()[1]
     boxes = self.detection_info[0]
     confidences = self.detection_info[1]
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence, self.threshold)
@@ -147,11 +134,10 @@ class YoloVideo:
     self.extract_detection_information()
 
     idxs = self.apply_suppression()
-    LABELS = self.get_yolo_labels()
-    #boxes = self.extract_detection_information()[0]
-    #classIDs = self.extract_detection_information()[2]
+    LABELS = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
 
     boxes = self.detection_info[0]
+    confidences = self.detection_info[1]
     classIDs = self.detection_info[2]
 
     #ensure at least one detection exists
@@ -183,6 +169,7 @@ class YoloVideo:
         if intersects_flag:
           #if LABELS[classIDs[i]] == "car" or LABELS[classIDs[i] == "truck"]:
           carAmount += 1
+          print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
           print("Intersection with ROI: TRUE")
 
       #carsAmount = str(carAmount) + " vehicles in ROI"

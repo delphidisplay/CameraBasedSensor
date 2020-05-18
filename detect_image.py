@@ -128,73 +128,31 @@ def main():
 
 
 
-def main_detection(interpreter, labels, image, threshold=0.25, count=1, output=True):
-  #parser = argparse.ArgumentParser(
-  #    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-  #parser.add_argument('-m', '--model', required=True,
-  #                    help='File path of .tflite file.')
-  #parser.add_argument('-i', '--input', required=True,
-  #                    help='File path of image to process.')
-  #parser.add_argument('-l', '--labels',
-  #                    help='File path of labels file.')
-  #parser.add_argument('-t', '--threshold', type=float, default=0.4,
-  #                    help='Score threshold for detected objects.')
-  #parser.add_argument('-o', '--output',
-  #                    help='File path for the result image with annotations')
-  #parser.add_argument('-c', '--count', type=int, default=5,
-  #                    help='Number of times to run inference')
-  #args = parser.parse_args()
-
-  labels = load_labels(labels) if labels else {}
+def main_detection(interpreter, labels, image, pickedClass, threshold=0.25, labeledOutputImage=True):
   #interpreter = make_interpreter(model)
   interpreter.allocate_tensors()
 
   image = Image.fromarray(image)
   scale = detect.set_input(interpreter, image.size,
                            lambda size: image.resize(size, Image.ANTIALIAS))
-
-  #print('----INFERENCE TIME----')
-  #print('Note: The first inference is slow because it includes',
-  #       'loading the model into Edge TPU memory.')
-  for _ in range(count):
-    start = time.perf_counter()
-    interpreter.invoke()
-    inference_time = time.perf_counter() - start
-    objs = detect.get_output(interpreter, threshold, scale)
-    #print('%.2f ms' % (inference_time * 1000))
-
-  #print('-------RESULTS--------')
-  if not objs:
-    #print('No objects detected')
-    pass
+  labels = load_labels(labels) if labels else {}
+  start = time.perf_counter()
+  interpreter.invoke()
+  inference_time = time.perf_counter() - start
+  objs = detect.get_output(interpreter, threshold, scale)
   
-  vehicle_count = 0
-
   final_objs = []
 
   for obj in objs:
     label_name = labels.get(obj.id, obj.id)
-    if label_name in ['car', 'motorcycle', 'truck']:
-        
+    if label_name in pickedClass:
         final_objs.append(obj)
 
-        vehicle_count += 1
-        #print()
-        #print("Timestamp: {}".format(time.strftime('%a %H:%M:%S')))
-        #print('----INFERENCE TIME----')
-        #print('%.2f ms' % (inference_time * 1000))
+  image = None
 
-        #print(labels.get(obj.id, obj.id))
-        #print('  id:    ', obj.id)
-        #print('  score: ', obj.score)
-        #print('  bbox:  ', obj.bbox)
-
-  if output:
+  if labeledOutputImage:
     image = image.convert('RGB')
     draw_objects(ImageDraw.Draw(image), objs, labels)
-    #image.save(args.output)
-    #image.show()
-    
     image = np.array(image)
 
   return final_objs, image
