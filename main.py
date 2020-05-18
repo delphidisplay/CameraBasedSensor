@@ -20,11 +20,12 @@ ACTIVE_YOLO_THREAD = False
 
 # Global variables
 camera_dictionary = {}
-current_camera = 0 #'rtsp://admin:12345@172.16.15.12'
+current_camera = 0 
+#current_camera = 'rtsp://admin:12345@172.16.15.12'
 camera_dictionary[current_camera] = Camera(current_camera)
 #second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 #camera_dictionary[second_camera] = Camera(second_camera)
-yolo_detection_algo = YoloVideo(initialize_yolo())
+yolo_detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny"))
 first = 0
 prev = 0
 
@@ -98,14 +99,10 @@ def __perform_detection(frame):
 		Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
 	"""
 
-
-
 	global ACTIVE_YOLO_THREAD
 
 	with data_lock:
-		#print('Starting')
 		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
-		#print('Intersections')
 		numCars = yolo_detection_algo.detect_intersections()
 		__log_car_detection(numCars)
 		print('Number of Cars Detected: {}'.format(numCars))
@@ -117,6 +114,7 @@ def __get_frames():
 		Generator function to get frames constantly to the frontend and to kickstart the detection on each frame.
 	"""
 	global thread, ACTIVE_YOLO_THREAD
+
 	for frame in camera_dictionary[current_camera]:
 		roi = camera_dictionary[current_camera].ROI
 

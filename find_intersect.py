@@ -6,13 +6,13 @@ def intersection_of_polygons(ROI, BBOX, thresh=0.7, debug=False, showPlot=False,
 	"""
 		Measures the intersection of 2 polygons (ROI and BBOX) from their coordinates and determines whether the BBOX
 		is within the ROI or not based on the intersection percentage relative to both the ROI and BBOX.
-		:param ROI: list of [x,y] coordinates specifying Region on Interest
-		:param BBOX: list of [x,y] coordinates specifying Bounding Box produced from YOLO model
-		:param thresh: 0.0-1.0 threshold used to vary acceptance whether the BBOX is within the ROI or not
-		:param debug: boolean - prints additional useful metrics such as intersection area and intersection percentage
-		:param showPlot: boolean - shows the plot of ROI and BBOX and its intersection if present
-		:param figure: name of the figure used in showPlot
-		:return: boolean - whether the BBOX is within the ROI or not
+		ROI: list of [x,y] coordinates specifying Region on Interest
+		BBOX: list of [x,y] coordinates specifying Bounding Box produced from YOLO model
+		thresh: 0.0-1.0 threshold used to vary acceptance whether the BBOX is within the ROI or not
+		debug: boolean - prints additional useful metrics such as intersection area and intersection percentage
+		showPlot: boolean - shows the plot of ROI and BBOX and its intersection if present
+		figure: name of the figure used in showPlot
+		boolean - whether the BBOX is within the ROI or not
 	"""
 
 
@@ -34,7 +34,6 @@ def intersection_of_polygons(ROI, BBOX, thresh=0.7, debug=False, showPlot=False,
 	isVehicleCounted = isIntersectArea == ROI.area or isIntersectArea == BBOX.area \
 						or isIntersectPercentRelativeBBOX > thresh \
 						or isIntersectPercentRelativeROI > thresh # determine whether to count BBOX in ROI or not
-
 
 	if debug:
 		print("BBOX intersects ROI: {}".format(isIntersect))
@@ -84,4 +83,3 @@ def test():
 
 if __name__ == "__main__":
 	test()
-
