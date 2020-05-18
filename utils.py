@@ -11,10 +11,10 @@ def add_frame_overlay(frame, camera_name="NOT_SPECIFIED"):
 	timestamp = datetime.now()
 	cv2.putText(frame, timestamp.strftime(
 		"%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
-				cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1) # add date and time
+				cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 255, 255), 2) # add date and time
 
 	cv2.putText(frame, "CAMERA: {}".format(camera_name), (10, frame.shape[0] - 40),
-				cv2.FONT_HERSHEY_SIMPLEX, 0.50, (0, 0, 255), 1) # add camera name
+				cv2.FONT_HERSHEY_SIMPLEX, 0.50, (255, 255, 255), 2) # add camera name
 
 	return frame
 
@@ -37,9 +37,16 @@ def prepare_frame_for_display(frame,camera_name="NOT_SPECIFIED"):
 	_,frame = cv2.imencode(".jpg", frame)
 	return b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +  bytearray(frame) + b'\r\n' 
 
-def initialize_yolo():
-	print("[INFO] loading YOLO from disk...")
-	configPath = "yolo-coco/yolov3.cfg"
-	weightsPath = "yolo-coco/yolov3.weights"
-	net =  cv2.dnn.readNetFromDarknet(configPath, weightsPath)
-	return net
+def initialize_yolo(modelType="yolov3-tiny"):
+    """Chooses correct yolo model weights and config file, loads into darknet, and returns net object"""
+    print("[INFO] loading YOLO from disk...")
+
+    if modelType == "yolov3-tiny":
+        configPath = "yolo-coco/yolov3-tiny.cfg"
+        weightsPath = "yolo-coco/yolov3-tiny.weights"
+    elif modelType == "yolov3":
+        configPath = "yolo-coco/yolov3.cfg"
+        weightsPath = "yolo-coco/yolov3.weights"
+
+    net =  cv2.dnn.readNetFromDarknet(configPath, weightsPath)
+    return net

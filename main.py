@@ -22,7 +22,7 @@ current_camera = 0
 camera_dictionary[current_camera] = Camera(current_camera)
 #second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 #camera_dictionary[second_camera] = Camera(second_camera)
-yolo_detection_algo = YoloVideo(initialize_yolo())
+yolo_detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny"))
 first = 0
 prev = 0
 
