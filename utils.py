@@ -3,6 +3,7 @@ import cv2
 from datetime import datetime
 from shapely.geometry import Polygon
 from imutils import resize
+from detect_image import make_interpreter
 
 def add_frame_overlay(frame, camera_name="NOT_SPECIFIED"):
 	"""
@@ -43,3 +44,9 @@ def initialize_yolo():
 	weightsPath = "yolo-coco/yolov3.weights"
 	net =  cv2.dnn.readNetFromDarknet(configPath, weightsPath)
 	return net
+
+def initialize_tpu():
+    model = "models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite"
+    interpreter = make_interpreter(model)
+    return interpreter
+
