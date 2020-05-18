@@ -10,7 +10,7 @@ class Camera:
 		dimensions: A list containing the width and height of each frame we would receive.
 		prepare_ratio: A list containing the ratio of the original frame to the frame that's resized when the frame is preparing for it to be displayed.
 		frontend_ratio: A list containing the ratio of the original frame to the frame that's resized when the frame is displayed on the frontend.
-        car_count: number of cars that have passed by this camera
+		car_count: number of cars that have passed by this camera
 	"""
 
 	def __init__(self, url):
@@ -19,7 +19,7 @@ class Camera:
 		"""
 		self.url = url
 		self.ROI = None
-        self.car_count = 0
+		self.car_count = 0
 		#self.frame_delay = 5
 		self.initialize_video_stream(url)
 
@@ -96,5 +96,5 @@ if __name__ == '__main__':
 	for frame in sample:
 		if i > 3000:
 			break
-		print(frame)
+		print("FROM CAMERA: " + frame)
 		i += 1
