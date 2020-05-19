@@ -4,12 +4,15 @@ from datetime import datetime
 import cv2
 import threading
 import atexit
-from datetime import datetime
+import pdb
+import time
+
 
 # Package-specific imports
 from camera import Camera
 from utils import *
 from YoloVideo import YoloVideo
+
 
 # Threading variables
 data_lock = threading.Lock()
@@ -32,63 +35,70 @@ app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 def __log_car_detection(numCars):
-    global first
-    global prev
+	global first
+	global prev
 
-    #Gets current time
-    now = datetime.now()
-    s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
+	#Gets current time
+	now = datetime.now()
+	s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
 
-    camera =  camera_dictionary[current_camera]
+	camera =  camera_dictionary[current_camera]
 
-    json_message = {
-        "camera_id": current_camera,
-	    "timestamp":s1,
-	    "vehicle_id": camera.car_count,
-	    "status": "000"
+	json_message = {
+		"camera_id": current_camera,
+		"timestamp":s1,
+		"vehicle_id": camera.car_count,
+		"status": "000"
 
-    }
+	}
 
-    if numCars is None or prev is None or first is None:
-        print(json_message)
-        return
 
-    if numCars == prev and prev < first:
-        #Car left ROI
-        first = prev
-        prev = numCars
-        json_message["status"] = "001"
-        camera.car_count += 1
+	if numCars is None or prev is None or first is None:
+		print(json_message)
+		return
 
-        print(json_message)
-        #with open('log.txt', 'a') as file:
-        #    file.write(json.dumps(json_message))
+	print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
 
-    elif numCars == prev and prev > first:
-        #Car entered ROI
-        first = prev
-        prev = numCars
-        json_message["status"] = "002"
+	if numCars == prev and prev < first:
+		#Car left ROI
+		json_message["status"] = "002"
+		camera.car_count += 1
 
-        print(json_message)
-        #with open('log.txt', 'a') as file:
-        #    file.write(json.dumps(json_message))
+		print(json_message)
+		#with open('log.txt', 'a') as file:
+		#    file.write(json.dumps(json_message))
+
+	elif numCars == prev and prev > first:
+		#Car entered ROI
+		json_message["status"] = "001"
+
+		print(json_message)
+		#with open('log.txt', 'a') as file:
+		#    file.write(json.dumps(json_message))
+
+	first = prev
+	prev = numCars
 
 
 
 def __test_json_messages():
-    numCars = 0
-    for i in range(10):
-        __log_car_detection(numCars)
-        print(i)
-        time.sleep(5)
+	print("IN TEST AREA")
+	numCars = 0
+	for i in range(10):
+		__log_car_detection(numCars)
+		if i == 4:
+			numCars = 1
+		if i == 7:
+			numCars = 0
+		print(i)
+		time.sleep(1)
 
 
 def __perform_detection(frame):
 	"""
 		Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
 	"""
-	global prev_cars
+
 	global ACTIVE_YOLO_THREAD
 
 	with data_lock:

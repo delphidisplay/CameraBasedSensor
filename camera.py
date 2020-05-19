@@ -96,5 +96,5 @@ if __name__ == '__main__':
 	for frame in sample:
 		if i > 3000:
 			break
-		print(frame)
+		print("FROM CAMERA: " + frame)
 		i += 1
