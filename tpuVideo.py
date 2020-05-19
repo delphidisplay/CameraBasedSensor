@@ -88,7 +88,9 @@ class YoloVideo:
         
         objs, labeledImage = image_inf(self.net, anchors, 
             self.frame, classes, self.confidence, labeledOutputImage=False)
+    
 
+    #print(objs)
     return objs
 
   def extract_detection_information(self):
@@ -116,12 +118,6 @@ class YoloVideo:
         if score_confidence > self.confidence:
               # scale the bounding box coordinates back relative to
               # the size of the image, keeping in mind that YOLO height
-              
-              ###box = detection[0:4] * np.array([W, H, W, H])
-              ###(centerX, centerY, width, height) = box.astype("int")
-
-              # use the center (x, y)-coordinates to derive the top
-              # and and left corner of the bounding box
               
               x = int(detection.bbox.xmin)
               y = int(detection.bbox.ymin)
@@ -181,15 +177,14 @@ class YoloVideo:
           # plt.plot(ROI_x, ROI_y, label="ROI", linewidth=4, color="magenta")
           # plt.title("Figure {}, Intersect Threshold: {}, Vehicle Counted: {}".format("1", "0", True))
           # plt.show()
+        
+        if LABELS.get(classIDs[i], classIDs[i]) in self.pickedClass:
+          intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
+          if intersects_flag:
+            carAmount += 1
+            print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
+            print("Intersection with ROI: TRUE")
 
-        intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
-        if intersects_flag:
-          #if LABELS[classIDs[i]] == "car" or LABELS[classIDs[i] == "truck"]:
-          carAmount += 1
-          print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
-          print("Intersection with ROI: TRUE")
-
-      #carsAmount = str(carAmount) + " vehicles in ROI"
       return carAmount
     return 0
 

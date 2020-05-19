@@ -8,6 +8,9 @@ import cv2
 from time import time
 from tpu_utils_tiny_yolo import *
 import argparse
+import collections
+
+from detect import BBox
 
 EDGETPU_SHARED_LIB = "libedgetpu.so.1"
 
@@ -66,7 +69,7 @@ def inference(interpreter, img, anchors, n_classes, threshold):
     interpreter.invoke()
 
     inf_time = time() - start
-    print(f"Net forward-pass time: {inf_time*1000} ms.")
+    #print(f"Net forward-pass time: {inf_time*1000} ms.")
 
     # Retrieve outputs of the network
     out1 = interpreter.get_tensor(output_details[0]['index'])
@@ -87,7 +90,7 @@ def inference(interpreter, img, anchors, n_classes, threshold):
     _boxes2, _scores2, _classes2 = featuresToBoxes(out2, anchors[[1, 2, 3]], 
             n_classes, net_input_shape, img_orig_shape, threshold)
     inf_time = time() - start
-    print(f"Box computation time: {inf_time*1000} ms.")
+    #print(f"Box computation time: {inf_time*1000} ms.")
 
     # This is needed to be able to append nicely when the output layers don't
     # return any boxes
@@ -110,6 +113,7 @@ def inference(interpreter, img, anchors, n_classes, threshold):
     return boxes, scores, classes
 
 def draw_boxes(image, boxes, scores, classes, class_names):
+    colors = np.random.uniform(30, 255, size=(len(class_names), 3))
     i = 0
     for topleft, botright in boxes:
         # Detected class
@@ -139,66 +143,6 @@ def get_interpreter_details(interpreter):
 
     return input_details, output_details, input_shape
 
-def webcam_inf(interpreter, anchors, classes, threshold=0.25):
-    cap = cv2.VideoCapture(0)
-
-    input_details, output_details, input_shape = \
-            get_interpreter_details(interpreter)
-
-    n_classes = len(classes)
-
-    # Load and process image
-    while True:
-        # Read frame from webcam
-        ret, frame = cap.read()
-
-        # Run inference, get boxes
-        boxes, scores, pred_classes = inference(interpreter, frame, anchors, n_classes, threshold)
-
-        if len(boxes) > 0:
-            draw_boxes(frame, boxes, scores, pred_classes, classes)
-
-        cv2.imshow("Image", frame)
-        k = cv2.waitKey(1) & 0xFF
-        if k == ord('q'):
-            break
-
-    cap.release()
-
-def video_inf(interpreter, anchors, classes, path, threshold=0.25):
-    cap = cv2.VideoCapture(path)
-
-    input_details, output_details, input_shape = \
-            get_interpreter_details(interpreter)
-
-    n_classes = len(classes)
-
-    # Load and process image
-    while True:
-        # Read frame from webcam
-        ret, frame = cap.read()
-
-        # Run inference, get boxes
-        start = time()
-        boxes, scores, pred_classes = inference(interpreter, frame, anchors, n_classes, threshold)
-
-        if len(boxes) > 0:
-            draw_boxes(frame, boxes, scores, pred_classes, classes)
-
-        inf_time = time() - start
-        fps = 1. / inf_time
-        print(f"Inference time: {inf_time*1000} ms.")
-
-        cv2.putText(frame, f"FPS: {fps:.1f}", (20, 20), cv2.FONT_HERSHEY_DUPLEX,
-                0.45, (200, 0, 200), 1, cv2.LINE_AA)
-
-        cv2.imshow("Image", frame)
-        k = cv2.waitKey(1) & 0xFF
-        if k == ord('q'):
-            break
-
-    cap.release()
-
 def image_inf(interpreter, anchors, img, classes, threshold, labeledOutputImage=False):
 
     n_classes = len(classes)
@@ -209,10 +153,7 @@ def image_inf(interpreter, anchors, img, classes, threshold, labeledOutputImage=
     # Run inference, get boxes
     
     boxes, scores, pred_classes = inference(interpreter, img, anchors, n_classes, threshold)
-
-
-
-
+    objs = get_output(boxes, pred_classes, scores, threshold)
 
     if labeledOutputImage:
         draw_boxes(img, boxes, scores, pred_classes, classes)
@@ -222,57 +163,26 @@ def image_inf(interpreter, anchors, img, classes, threshold, labeledOutputImage=
     #cv2.imshow("Image", img)
     #cv2.waitKey(0)
 
-    return (boxes, scores, pred_classes), img
+    return objs, img
 
-### WORKING ON BELOW TO GET OUTPUT OF ABOVE FUNCTION AS CORRECT OBJECT WITH ID ETC
+def get_output(boxes, class_ids, scores, score_threshold):
+  """Returns list of detected objects."""
+  count = len(scores)
 
-
-def output_tensor(item, i):
-  """Returns output tensor view."""
-  tensor = interpreter.tensor(item)()
-  #tensor = interpreter.tensor(interpreter.get_output_details()[i]['index'])()
-  return np.squeeze(tensor)
-
-
-#def get_output(interpreter, score_threshold, image_scale=(1.0, 1.0)):
-def get_output(boxes, class_ids, scores, score_threshold)
-"""Returns list of detected objects."""
-  boxes = boxes #output_tensor(interpreter, 0)
-  class_ids = class_ids #output_tensor(interpreter, 1)
-  scores = scores #output_tensor(interpreter, 2)
-  count = int(output_tensor(interpreter, 3))
-
-  width, height = input_size(interpreter)
-  image_scale_x, image_scale_y = image_scale
-  sx, sy = width / image_scale_x, height / image_scale_y
+  Object = collections.namedtuple('Object', ['id', 'score', 'bbox'])
 
   def make(i):
-    ymin, xmin, ymax, xmax = boxes[i]
+    topleft, botright = boxes[i]
+
+    ymin, xmin, ymax, xmax = topleft[1], topleft[0], botright[1], botright[0]
+
     return Object(
         id=int(class_ids[i]),
         score=float(scores[i]),
         bbox=BBox(xmin=xmin,
                   ymin=ymin,
                   xmax=xmax,
-                  ymax=ymax).scale(sx, sy).map(int))
+                  ymax=ymax).map(int))
 
   return [make(i) for i in range(count) if scores[i] >= score_threshold]
 
-
-if __name__ == "__main__":
-    anchors = get_anchors(args.anchors)
-    classes = get_classes(args.classes)
-
-    # Generate random colors for each detection
-    colors = np.random.uniform(30, 255, size=(len(classes), 3))
-
-    interpreter = make_interpreter(args.model, args.edge_tpu)
-    print("Allocating tensors.")
-    interpreter.allocate_tensors()
-
-    if args.cam:
-        webcam_inf(interpreter, anchors, classes, threshold=args.threshold)
-    elif args.image:
-        image_inf(interpreter, anchors, args.image, classes, threshold=args.threshold)
-    elif args.video:
-        video_inf(interpreter, anchors, classes, args.video, threshold=args.threshold)
