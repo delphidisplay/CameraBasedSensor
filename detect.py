@@ -14,6 +14,7 @@
 # limitations under the License.
 """Functions to work with detection models."""
 
+# Python-specific imports
 import collections
 import numpy as np
 

@@ -39,14 +39,14 @@ def prepare_frame_for_display(frame,camera_name="NOT_SPECIFIED"):
 	return b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +  bytearray(frame) + b'\r\n' 
 
 
-def initialize_yolo(modelType="yolov3-tiny"):
+def initialize_yolo(modelType="cpu-tiny-yolov3"):
     """Loads model config and weights into darknet and returns object for inference"""
     print("[INFO] loading YOLO from disk...")
 
-    if modelType == "yolov3-tiny":
+    if modelType == "cpu-tiny-yolov3":
         configPath = "yolo-coco/yolov3-tiny.cfg"
         weightsPath = "yolo-coco/yolov3-tiny.weights"
-    elif modelType == "yolov3":
+    elif modelType == "cpu-yolov3":
         configPath = "yolo-coco/yolov3.cfg"
         weightsPath = "yolo-coco/yolov3.weights"
 
@@ -54,13 +54,13 @@ def initialize_yolo(modelType="yolov3-tiny"):
     return net
 
 
-def initialize_tpu(modelType="tpu-mobilenet"):
+def initialize_tpu(modelType="tpu-tiny-yolov3"):
     """Loads tflite model into tpu and returns object for tpu inference"""
     print("[INFO] loading tflite model into TPU...")
     
-    if modelType == "tpu-mobilenet":
+    if modelType == "tpu-mobilenetv2":
         model = "models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite"
-    elif modelType == "tpu-tiny-yolo":
+    elif modelType == "tpu-tiny-yolov3":
         model = "models/quant_coco-tiny-v3-relu_edgetpu.tflite"
 
     interpreter = make_interpreter(model)
