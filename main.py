@@ -38,9 +38,9 @@ def __log_car_detection(numCars):
 	global first
 	global prev
 
-	#Gets current time
-	now = datetime.now()
-	s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
+	# Gets current time
+        # [UPDATE] 05/19/2020: current time is now in seconds from Jan 1 1970
+        s1 = time.time()
 
 	camera =  camera_dictionary[current_camera]
 
