@@ -12,18 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Modified Source: https://github.com/google-coral/tflite/blob/master/python/examples/detection/detect_image.py
+
 """Example using TF Lite to detect objects in a given image."""
 
+# Python-specific imports
 import argparse
 import time
 import numpy as np
-
 from PIL import Image
 from PIL import ImageDraw
-
-import detect
 import tflite_runtime.interpreter as tflite
 import platform
+
+# Package-specific imports
+import detect
 
 EDGETPU_SHARED_LIB = {
 	'Linux': 'libedgetpu.so.1',

@@ -1,3 +1,5 @@
+# Source: https://github.com/guichristmann/edge-tpu-tiny-yolo/blob/master/utils.py
+
 # Python-specific imports
 import numpy as np
 import os

@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Source: https://github.com/google-coral/tflite/blob/master/python/examples/detection/detect.py
+
 """Functions to work with detection models."""
 
 # Python-specific imports

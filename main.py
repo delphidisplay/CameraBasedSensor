@@ -3,7 +3,6 @@ from flask import Flask, request, render_template, Response, flash
 from datetime import datetime
 import cv2
 import threading
-import atexit
 from datetime import datetime
 import time
 import argparse
@@ -98,6 +97,7 @@ def __perform_detection(frame):
 	global prev_cars
 	global ACTIVE_YOLO_THREAD
 	global total_cars_count
+	global detection_algo
 
 	with data_lock:
 		detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
@@ -222,7 +222,7 @@ def remove_camera():
 
 	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
-def parseArguments():
+def __parseArguments():
 	"""Choose arguments to run flask application. Arguments are --model and --webcam"""
 	global camera_dictionary
 	global detection_algo
@@ -256,7 +256,7 @@ def parseArguments():
 
 
 if __name__ == "__main__":
-	parseArguments()
+	__parseArguments()
 	app.run(host="0.0.0.0", debug=False)
 	
 	
