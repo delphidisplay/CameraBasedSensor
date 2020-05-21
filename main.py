@@ -149,7 +149,7 @@ def record_roi():
 	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
 		x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
 		roi_coord.append([int(x_coord), int(y_coord)])
-		#print(roi_coord)
+	#print(roi_coord)
 
 	if is_valid_roi(roi_coord): # validate the ROI coordinates
 		#print("VALID ROI SPECIFIED")
@@ -205,9 +205,9 @@ def remove_camera():
 		camera_dictionary[camera_name].stop_video_stream()
 		del(camera_dictionary[camera_name])
 
-	# If the camera being removed was the current camera, set a new camera stream to display onto the frontend
-	if camera_dictionary and current_camera == camera_name:
-		current_camera = next(camera_dictionary)
+		# If the camera being removed was the current camera, set a new camera stream to display onto the frontend
+		if camera_dictionary and current_camera == camera_name:
+			current_camera = next(camera_dictionary)
 
 	else:
 		print("INVALID ENTRY: CAMERA NAME TO REMOVE DOES NOT EXIST")
