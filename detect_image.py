@@ -54,6 +54,7 @@ def load_labels(path, encoding='utf-8'):
 
 
 def make_interpreter(model_file):
+	"""Generate interpreter object, used for tpu models"""
 	model_file, *device = model_file.split('@')
 	return tflite.Interpreter(
 			model_path=model_file,
@@ -71,6 +72,10 @@ def draw_objects(draw, objs, labels):
 		draw.text((bbox.xmin + 10, bbox.ymin + 10),'%s\n%.2f' % (labels.get(obj.id, obj.id), obj.score), fill='red')
 
 def tpu_mobilenet_detection(interpreter, labels, image, pickedClass, threshold=0.25, labeledOutputImage=True):
+	"""
+		Detection for mobilenet model, 
+		returns filtered outputs: only outputs with the labels that we care about 
+	"""
 	#interpreter = make_interpreter(model)
 	#interpreter.allocate_tensors()
 
@@ -83,6 +88,7 @@ def tpu_mobilenet_detection(interpreter, labels, image, pickedClass, threshold=0
 	
 	final_objs = []
 
+	#Filter out labels so that we only use the labels we want to detect for
 	for obj in objs:
 		label_name = labels.get(obj.id, obj.id)
 		if label_name in pickedClass:

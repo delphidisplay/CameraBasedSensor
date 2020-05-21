@@ -31,6 +31,9 @@ class YoloVideo:
 		self.detection_info = None
 
 	def set_frame_and_roi(self,frame,camera):
+		"""
+			resize the ROI to match the frame
+		"""
 		self.frame = frame
 
 		# Ratios needed to resize the ROI coordinates to match the original frame
@@ -134,6 +137,9 @@ class YoloVideo:
 		self.detection_info = (boxes,confidences,classIDs)
 
 	def apply_suppression(self):
+		"""
+			apply non-maxima suppression to the detected bounding boxes
+		"""
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
 		
