@@ -38,7 +38,6 @@ def prepare_frame_for_display(frame,camera_name="NOT_SPECIFIED"):
 	_,frame = cv2.imencode(".jpg", frame)
 	return b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' +  bytearray(frame) + b'\r\n' 
 
-
 def initialize_yolo(modelType="cpu-tiny-yolov3"):
     """Loads model config and weights into darknet and returns object for inference"""
     print("[INFO] loading YOLO from disk...")
@@ -54,6 +53,7 @@ def initialize_yolo(modelType="cpu-tiny-yolov3"):
     return net
 
 
+
 def initialize_tpu(modelType="tpu-tiny-yolov3"):
     """Loads tflite model into tpu and returns object for tpu inference"""
     print("[INFO] loading tflite model into TPU...")
@@ -66,4 +66,3 @@ def initialize_tpu(modelType="tpu-tiny-yolov3"):
     interpreter = make_interpreter(model)
     interpreter.allocate_tensors()
     return interpreter
-

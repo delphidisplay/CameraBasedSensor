@@ -3,13 +3,16 @@ from flask import Flask, request, render_template, Response, flash
 from datetime import datetime
 import cv2
 import threading
+
 from datetime import datetime
 import time
 import argparse
 
+
 # Package-specific imports
 from camera import Camera
 from utils import *
+
 
 # Threading variables
 data_lock = threading.Lock()
@@ -18,6 +21,7 @@ ACTIVE_YOLO_THREAD = False
 # Global variables
 detection_algo = None
 camera_dictionary = {}
+
 current_camera = None
 
 total_cars_count = 0
@@ -37,6 +41,7 @@ def __log_car_detection(numCars):
 	#Gets current time
 	now = datetime.now()
 	s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
+
 
 	camera =  camera_dictionary[current_camera]
 
@@ -67,7 +72,6 @@ def __log_car_detection(numCars):
 	elif numCars == prev and prev > first:
 		#Car entered ROI
 		json_message["status"] = "001"
-
 		print(json_message)
 		#with open('log.txt', 'a') as file:
 		#    file.write(json.dumps(json_message))
@@ -94,7 +98,7 @@ def __perform_detection(frame):
 	"""
 		Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
 	"""
-	global prev_cars
+
 	global ACTIVE_YOLO_THREAD
 	global total_cars_count
 	global detection_algo
