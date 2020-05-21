@@ -49,6 +49,7 @@ def __log_car_detection(numCars):
 
 	}
 
+
 	if numCars is None or prev is None or first is None:
 		print(json_message)
 		return
@@ -74,6 +75,7 @@ def __log_car_detection(numCars):
 
 	first = prev
 	prev = numCars
+
 
 
 def __test_json_messages():
