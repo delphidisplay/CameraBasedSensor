@@ -85,7 +85,7 @@ def __test_json_messages():
 
 def __perform_detection(frame):
 	"""
-	Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
+		Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
 	"""
 	global prev_cars
 	global ACTIVE_YOLO_THREAD
@@ -108,7 +108,7 @@ def __perform_detection(frame):
 
 def __get_frames():
 	"""
-	Generator function to get frames constantly to the frontend and to kickstart the detection on each frame.
+		Generator function to get frames constantly to the frontend and to kickstart the detection on each frame.
 	"""
 	global thread, ACTIVE_YOLO_THREAD
 
@@ -126,21 +126,21 @@ def __get_frames():
 @app.route('/')
 def show_stream():
 	"""
-	Function called when Flask boots up for the first time.
+		Function called when Flask boots up for the first time.
 	"""
 	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
 @app.route("/stream_feed")
 def stream_feed():
 	"""
-	Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
+		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
 	"""
 	return Response(__get_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/record_roi', methods=['POST'])
 def record_roi():
 	"""
-	Updates the current camera stream's ROI coordinates.
+		Updates the current camera stream's ROI coordinates.
 	"""
 	print("RECEIVED ROI")
 	#print(request.form)
@@ -162,7 +162,7 @@ def record_roi():
 @app.route('/choose_camera', methods=['POST'])
 def choose_camera():
 	"""
-	Switches the camera stream that's being displayed on the frontend.
+		Switches the camera stream that's being displayed on the frontend.
 	"""
 	global current_camera
 	current_camera = request.form["camera_view"]
@@ -177,7 +177,7 @@ def choose_camera():
 @app.route('/add_camera', methods=['POST'])
 def add_camera():
 	"""
-	Adds a new camera to the system with the user specified camera url.
+		Adds a new camera to the system with the user specified camera url.
 	"""
 
 	camera_name = request.form["camera_name"]
@@ -197,7 +197,7 @@ def add_camera():
 @app.route('/remove_camera', methods=['POST'])
 def remove_camera():
 	"""
-	Removes a camera from the system and ends the camera's video stream.
+		Removes a camera from the system and ends the camera's video stream.
 	"""
 	camera_name = request.form["remove_name"]
 

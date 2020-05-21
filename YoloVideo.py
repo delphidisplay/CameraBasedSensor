@@ -49,8 +49,6 @@ class YoloVideo:
 		"""
 			return the COCO class labels our YOLO model was trained on
 		"""
-		###return open("yolo-coco/coco.names").read().strip().split("\n")
-		
 		labels_file = "models/coco_labels.txt"
 		return labels_file
 
