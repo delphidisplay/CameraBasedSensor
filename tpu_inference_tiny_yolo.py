@@ -14,17 +14,18 @@ from detect import BBox
 EDGETPU_SHARED_LIB = "libedgetpu.so.1"
 
 def make_interpreter(model_path, edge_tpu=False):
-	# Load the TF-Lite model and delegate to Edge TPU
+	'''Load the TF-Lite model and delegate to Edge TPU'''
 	if edge_tpu:
 		interpreter = tflite.Interpreter(model_path=model_path,
-						experimental_delegates=[ tflite.load_delegate(EDGETPU_SHARED_LIB)])
+						experimental_delegates=[tflite.load_delegate(EDGETPU_SHARED_LIB)])
 	else:
 		interpreter = tflite.Interpreter(model_path=model_path)
 
 	return interpreter
 
-# Run YOLO inference on the image, returns detected boxes
 def inference(interpreter, img, anchors, n_classes, threshold):
+	'''Run YOLO inference on the image, returns detected boxes'''
+	
 	input_details, output_details, net_input_shape = get_interpreter_details(interpreter)
 
 	img_orig_shape = img.shape
@@ -89,6 +90,7 @@ def inference(interpreter, img, anchors, n_classes, threshold):
 	return boxes, scores, classes
 
 def draw_boxes(image, boxes, scores, classes, class_names):
+	'''Draw the bounding boxes on the image with class names'''
 	colors = np.random.uniform(30, 255, size=(len(class_names), 3))
 	i = 0
 	for topleft, botright in boxes:
@@ -111,7 +113,7 @@ def draw_boxes(image, boxes, scores, classes, class_names):
 		i += 1
 
 def get_interpreter_details(interpreter):
-	# Get input and output tensor details
+	'''Get input and output tensor details'''
 	input_details = interpreter.get_input_details()
 	output_details = interpreter.get_output_details()
 	input_shape = input_details[0]["shape"]
@@ -119,7 +121,7 @@ def get_interpreter_details(interpreter):
 	return input_details, output_details, input_shape
 
 def get_output(boxes, class_ids, scores, score_threshold):
-	"""Returns list of detected objects."""
+	'''Returns list of detected objects.'''
 	count = len(scores)
 
 	Object = collections.namedtuple('Object', ['id', 'score', 'bbox'])
@@ -140,19 +142,26 @@ def get_output(boxes, class_ids, scores, score_threshold):
 	return [make(i) for i in range(count) if scores[i] >= score_threshold]
 	
 def tpu_tiny_yolo_detection(interpreter, anchors, img, classes, threshold, labeledOutputImage=False):
+	'''
+	Performs a tiny yolo detection on the tpu.
+	interpreter: interpreter object from make_interpreter()
+	anchors: 
+	img: image for inference 
+	classes: classes that are used by the interpreter model
+	threshold: float, bounding boxes with a confidence over this threshold will be kept
+	labeledOutputImage: bool, creates image with bounding boxes
+	'''
+	n_classes = len(classes)
 
-		n_classes = len(classes)
+	input_details, output_details, input_shape = get_interpreter_details(interpreter)
 
-		input_details, output_details, input_shape = \
-						get_interpreter_details(interpreter)
+	# Run inference, get boxes
+	boxes, scores, pred_classes = inference(interpreter, img, anchors, n_classes, threshold)
+	objs = get_output(boxes, pred_classes, scores, threshold)
 
-		# Run inference, get boxes
-		boxes, scores, pred_classes = inference(interpreter, img, anchors, n_classes, threshold)
-		objs = get_output(boxes, pred_classes, scores, threshold)
+	if labeledOutputImage:
+		draw_boxes(img, boxes, scores, pred_classes, classes)
+	else:
+		img = None
 
-		if labeledOutputImage:
-				draw_boxes(img, boxes, scores, pred_classes, classes)
-		else:
-				img = None
-
-		return objs, img
+	return objs, img

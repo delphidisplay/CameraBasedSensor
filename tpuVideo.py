@@ -17,15 +17,15 @@ class tpuVideo(YoloVideo):
 
   def __init__(self, net, modelType):
     """
-	self.modelType: choose between tpu-mobilenetv2 or tpu-tiny-yolov3
+	Inherits variables from the YoloVideo class.
+	self.modelType: The tpu model to use for detection. Choose between tpu-mobilenetv2 or tpu-tiny-yolov3.
     """
     super(tpuVideo, self).__init__(net)
     self.modelType = modelType # choose tiny-yolo or mobilenet
 
   def detect_in_frame(self, output_time=False):
     """
-      detect vehicle in frame
-      returns layer outputs, which contains class id and confidence probabilities
+      
     """
     if self.modelType == "tpu-mobilenetv2":
         objs, labeledImage = tpu_mobilenet_detection(self.net, 
