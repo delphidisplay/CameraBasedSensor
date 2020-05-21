@@ -39,48 +39,54 @@ def __log_car_detection(numCars):
 	now = datetime.now()
 	s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
 
-	camera = camera_dictionary[current_camera]
+	camera =  camera_dictionary[current_camera]
 
 	json_message = {
 		"camera_id": current_camera,
 		"timestamp":s1,
 		"vehicle_id": camera.car_count,
 		"status": "000"
+
 	}
 
 	if numCars is None or prev is None or first is None:
 		print(json_message)
 		return
 
+	print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
+
 	if numCars == prev and prev < first:
 		#Car left ROI
-		first = prev
-		prev = numCars
-		json_message["status"] = "001"
+		json_message["status"] = "002"
 		camera.car_count += 1
 
 		print(json_message)
 		#with open('log.txt', 'a') as file:
-		#	file.write(json.dumps(json_message))
+		#    file.write(json.dumps(json_message))
 
 	elif numCars == prev and prev > first:
 		#Car entered ROI
-		first = prev
-		prev = numCars
-		json_message["status"] = "002"
+		json_message["status"] = "001"
 
 		print(json_message)
 		#with open('log.txt', 'a') as file:
-		#	file.write(json.dumps(json_message))
+		#    file.write(json.dumps(json_message))
 
+	first = prev
+	prev = numCars
 
 
 def __test_json_messages():
+	print("IN TEST AREA")
 	numCars = 0
 	for i in range(10):
 		__log_car_detection(numCars)
+		if i == 4:
+			numCars = 1
+		if i == 7:
+			numCars = 0
 		print(i)
-		time.sleep(5)
+		time.sleep(1)
 
 
 def __perform_detection(frame):
