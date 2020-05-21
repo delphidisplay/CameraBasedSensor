@@ -9,11 +9,11 @@ import cv2
 MAX_BOXES = 30
 
 def sigmoid(x):
-	'''regular sigmoid function'''
+	"""regular sigmoid function"""
 	return 1. / (1 + np.exp(-x))
 
 def letterbox_image(image, size):
-    '''resize image with unchanged aspect ratio using padding'''
+    """resize image with unchanged aspect ratio using padding"""
     iw, ih = image.shape[0:2][::-1]
     w, h = size
     scale = min(w/iw, h/ih)
@@ -28,7 +28,7 @@ def letterbox_image(image, size):
     return new_image
 
 def featuresToBoxes(outputs, anchors, n_classes, net_input_shape, img_orig_shape, threshold):
-	'''create boxes from features'''
+	"""create boxes from features"""
 	grid_shape = outputs.shape[1:3]
 	n_anchors = len(anchors)
 
@@ -82,7 +82,7 @@ def featuresToBoxes(outputs, anchors, n_classes, net_input_shape, img_orig_shape
 	return selected_boxes, selected_scores, selected_classes
     
 def get_anchors(path):
-	'''Get the anchors'''
+	"""Get the anchors"""
 	anchors_path = os.path.expanduser(path)
 	with open(anchors_path) as f:
 		anchors = f.readline()
@@ -90,14 +90,14 @@ def get_anchors(path):
 	return np.array(anchors).reshape(-1, 2)
 
 def get_classes(path):
-	'''Get the classes'''
+	"""Get the classes"""
 	classes_path = os.path.expanduser(path)
 	with open(classes_path) as f:
 		classes = [line.strip('\n') for line in f.readlines()]
 	return classes
 
 def nms_boxes(boxes, scores, classes):
-	'''Use non-maximum suppression on the boxes received'''
+	"""Use non-maximum suppression on the boxes received"""
 	present_classes = np.unique(classes)
 
 	assert(boxes.shape[0] == scores.shape[0])
@@ -144,7 +144,7 @@ def nms_boxes(boxes, scores, classes):
 	return boxes[:MAX_BOXES], scores[:MAX_BOXES], classes[:MAX_BOXES]
 
 def iou(box1, box2):
-	'''Get the iou between 2 bounding boxes'''
+	"""Get the iou between 2 bounding boxes"""
 	xi1 = max(box1[0][0], box2[0][0])
 	yi1 = max(box1[0][1], box2[0][1])
 	xi2 = min(box1[1][0], box2[1][0])
