@@ -4,14 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-     <script src="https://cdn.jsdelivr.net/d3js/3.5.9/d3.min.js"></script>
-     <link rel="stylesheet" href="../static/style.css">
-     
-     <title>Delphi Display</title>
+    <title>Delphi Display</title>
 </head>
-
 <body>
-
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <a class="navbar-brand" href="#">
   <img src="/static/delphi.png" width="160" height="50" class="d-inline-block align-top" alt="Delphi Logo">
@@ -38,8 +33,10 @@
 <h3>Live Stream</h3>
 
 <div>
-    <input id="roi_remove" type="button" value="Remove ROI" onclick="removeROI()">
+    <input id='draw-btn' type='button' value='Draw ROI' onclick='draw_roi()' />
+    <input id="roi_submit" type="button" value="Submit ROI" onclick="submit_roi()">
 </div>
+<canvas id="myCanvas" width="800px" height="450px" style="background: url('{{ url_for('stream_feed') }}')"></canvas>
 
 <br>
 
@@ -61,6 +58,7 @@
 
 <br>
 
+
 <form action="/add_camera" method="post">
     <label for="stream_url">Add Camera:</label>
     <input type="text" id="stream_url" name="stream_url" value="rtsp://..." required>
@@ -80,6 +78,10 @@
 
 <p>Current Stream Dictionary</p>
 <p>{{camera_dict}}</p>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 </div>
 
 {% block content %}
@@ -95,25 +97,141 @@
 </div>
 {% endblock %}
 
-<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-<script src="../static/script.js"></script>
-<script>
-window.onload = function() {
-	var render_coord = {{ camera_dict[current_camera]["ROI"] if camera_dict[current_camera]["ROI"] }};
-	
-	console.log("GOT ROI: ", render_coord)
-	
-	if(render_coord){
-		cameraSwitchOnReload(render_coord);
-	}
-	};
-</script>
 
 </body>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+
+<script>
+
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext("2d");
+var coord = [];
+var startPosition = {x: 0, y: 0};
+var lineCoordinates = {x: 0, y: 0};
+var isDrawStart = true;
+var save_coord = false;
+
+window.onload = function() { 
+    var render_coord = {{ camera_dict[current_camera].ROI }};
+    if (render_coord) {
+        render_mask(); // render current stream ROI immediately
+    }
+};
+
+document.getElementById("myCanvas").addEventListener('click', function (event) {
+    // https://stackoverflow.com/a/288731/1497139
+    // get click coordinates on canvas
+    let rect = canvas.getBoundingClientRect();
+            let x = Math.round(event.clientX - rect.left);
+            let y = Math.round(event.clientY - rect.top);
+    if (save_coord == true){
+        coord.push({x,y}); // store coordinates
+        console.log({x, y});
+        console.log(coord);
+        lineCoordinates.x = x;
+        lineCoordinates.y = y;
+        draw_line(x, y); // draw line on canvas
+    }
+
+  });
+
+// push ROI in coord to backend
+function submit_roi(){
+    if (coord.length > 2){
+        document.getElementById("draw-btn").value = "Draw ROI";
+
+        let x = coord[0].x;
+        let y = coord[0].y;
+
+        coord.push({x,y});
+        console.log({x,y});
+        console.log(coord);
+
+        display_line(startPosition.x, startPosition.y, coord[0].x, coord[0].y);
+        $.post("/record_roi",
+        {
+            roi_coord: coord
+        });
+
+        coord = [];
+
+    }
+}
+
+// set start and end coord to draw a line
+function draw_line(){
+   if (isDrawStart == false){
+        display_line(startPosition.x, startPosition.y, lineCoordinates.x, lineCoordinates.y);
+   }
+   startPosition.x = lineCoordinates.x;
+   startPosition.y = lineCoordinates.y;
+   isDrawStart = false;
+   }
+
+// actually draw the line
+function display_line(sx, sy, dx, dy){
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(dx, dy);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#00ff00';
+        ctx.stroke();
+}
+
+// function not used; artifact
+function Draw(){
+  ctx.beginPath();
+  ctx.arc(250, 210, 200, 0, 2 * Math.PI, false);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#00ff00';
+  ctx.stroke();
+}
+
+// toggle ROI button message from Draw and Cancel
+// remove and render masks if necessary
+  function draw_roi(){
+        isDrawStart = true;
+        if (document.getElementById("draw-btn").value == "Draw ROI" ){
+            document.getElementById("draw-btn").value = "Cancel ROI";
+            save_coord = true;
+            coord = [];
+            remove_mask();
+
+        }
+        else if (document.getElementById("draw-btn").value == "Cancel ROI"){
+            document.getElementById("draw-btn").value = "Draw ROI";
+            save_coord = false;
+            coord = [];
+            remove_mask();
+            render_mask();
+        }
+  }
+
+// remove ROI by clearing canvas
+  function remove_mask(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+// render mask by looping through ROI coordinates from backend
+  function render_mask(){
+    console.log("render mask called");
+    var render_coord = {{ camera_dict[current_camera].ROI }};
+    isDrawStart = true;
+
+    console.log(render_coord);
+
+    var rc;
+    for (rc = 0; rc < render_coord.length; rc++){
+        lineCoordinates.x = render_coord[rc][0];
+        lineCoordinates.y = render_coord[rc][1];
+        draw_line();
+    }
+
+  }
+
+</script>
+
 
 </html>
 
