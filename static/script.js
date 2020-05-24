@@ -53,7 +53,7 @@ svg.on('mouseup', function(){
         g.append('circle')
         .attr('cx', points[i][0])
         .attr('cy', points[i][1])
-        .attr('r', 6)
+        .attr('r', 10)
         .attr('fill','#49fb35')
         .attr('stroke', '#000')
         .attr('is-handle', 'true')
@@ -100,7 +100,7 @@ function closePolygon(){
         .append('circle')
         .attr('cx', points[i][0])
         .attr('cy', points[i][1])
-        .attr('r', 6)
+        .attr('r', 10)
         .attr('fill', 'green')
         .attr('stroke', '#000')
         .attr('is-handle', 'true')
@@ -185,7 +185,7 @@ function cameraSwitchOnReload(points){
         .append('circle')
         .attr('cx', points[i][0])
         .attr('cy', points[i][1])
-        .attr('r', 6)
+        .attr('r', 10)
         .attr('fill', 'green')
         .attr('stroke', '#000')
         .attr('is-handle', 'true')
@@ -194,6 +194,7 @@ function cameraSwitchOnReload(points){
 
         console.log("CIRCLE:", circle.attr('cx'));
     }
+    
     sendROI(current_points);      // send points to backend once polygon is closed
     points.splice(0);
     drawing = false;

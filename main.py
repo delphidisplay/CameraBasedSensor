@@ -58,7 +58,7 @@ def __log_car_detection(numCars):
 		print(json_message)
 		return
 
-	print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
+	#print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
 
 	if numCars == prev and prev < first:
 		#Car left ROI
@@ -108,7 +108,7 @@ def __perform_detection(frame):
 		numCars = detection_algo.detect_intersections() 
 		__log_car_detection(numCars)
 	
-		print("Detection Complete", time.strftime('%a %H:%M:%S')) 
+		#print("Detection Complete", time.strftime('%a %H:%M:%S')) 
 	
 		if numCars > 0:
 			total_cars_count += numCars
@@ -157,16 +157,26 @@ def record_roi():
 	print("RECEIVED ROI")
 	#print(request.form)
 
+	roi_coord_is_NaN = False
+
 	roi_coord = []
 	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
 		x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
-		roi_coord.append([int(x_coord), int(y_coord)])
+		print("x_coord", x_coord, type(x_coord), "y_coord", y_coord, type(y_coord))
+		
+		if x_coord == "NaN" or y_coord == "NaN":
+			roi_coord_is_NaN = True
+			break
+		else:
+			roi_coord.append([int(x_coord), int(y_coord)])
+	
 	#print(roi_coord)
 
-	if is_valid_roi(roi_coord): # validate the ROI coordinates
-		#print("VALID ROI SPECIFIED")
+	if is_valid_roi(roi_coord) and not roi_coord_is_NaN: # validate the ROI coordinates
+		print("VALID ROI SPECIFIED")
 		camera_dictionary[current_camera].set_roi_coordinates(roi_coord)
-	else:
+	
+	if not is_valid_roi(roi_coord):
 		print("INVALID ROI: MUST SPECIFY POLYGON")
 
 	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
