@@ -34,7 +34,7 @@ app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-def __log_car_detection(numCars):
+def __log_car_json(numCars):
 	global first
 	global prev
 
@@ -50,7 +50,6 @@ def __log_car_detection(numCars):
 		"timestamp":s1,
 		"vehicle_id": camera.car_count,
 		"status": "000"
-
 	}
 
 
@@ -80,7 +79,6 @@ def __log_car_detection(numCars):
 	prev = numCars
 
 
-
 def __test_json_messages():
 	print("IN TEST AREA")
 	numCars = 0
@@ -93,6 +91,31 @@ def __test_json_messages():
 		print(i)
 		time.sleep(1)
 
+def __init_tracking(trackObj):
+	"""
+		Preps the camera to start the tracking sequence.
+	"""
+	if trackObj is not None:
+		camera = camera_dictionary[current_camera]
+		camera.isTracked = True
+		camera.trackObj = trackObj
+
+def __perform_tracking(frame):
+	"""
+		Kickstarts the tracking on the given frame. This is run on a thread concurrent to the main server.
+	"""
+	global ACTIVE_YOLO_THREAD
+	
+	trackObj = camera_dictionary[current_camera].trackObj
+	
+	success, bbox = trackObj.update_tracker(frame)
+	print(f"Tracking Results: {success} {bbox}")
+	
+	if not success:
+		camera_dictionary[current_camera].isTracked = False
+		__log_car_json(numCars=0)
+	
+	ACTIVE_YOLO_THREAD = False
 
 def __perform_detection(frame):
 	"""
@@ -105,8 +128,9 @@ def __perform_detection(frame):
 
 	with data_lock:
 		detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
-		numCars = detection_algo.detect_intersections() 
-		__log_car_detection(numCars)
+		numCars, trackObj = detection_algo.detect_intersections() 
+
+		__log_car_json(numCars)
 	
 		print("Detection Complete", time.strftime('%a %H:%M:%S')) 
 	
@@ -116,6 +140,8 @@ def __perform_detection(frame):
 			print('Total Vehicles Counted: {}'.format(total_cars_count))
 			
 	ACTIVE_YOLO_THREAD = False
+	
+	__init_tracking(trackObj) 
 
 
 def __get_frames():
@@ -129,7 +155,11 @@ def __get_frames():
 
 		# Check to make sure that the current camera has a specified ROI and that there's no thread running.
 		if roi and not ACTIVE_YOLO_THREAD:
-			thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
+			
+			if camera_dictionary[current_camera].isTracked:
+				thread = threading.Thread(target=__perform_tracking,args=(frame,), daemon = True)
+			else:
+				thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
 			thread.start()
 			ACTIVE_YOLO_THREAD = True
 

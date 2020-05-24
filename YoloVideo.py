@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 # Package-specific imports
 from find_intersect import intersection_of_polygons
 from detect_image import load_labels
+from tracking import TrackingStream
 
 class YoloVideo:
 	"""
@@ -157,6 +158,8 @@ class YoloVideo:
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
 		classIDs = self.detection_info[2]
+		
+		trackObj = None
 
 		#ensure at least one detection exists
 		if len(idxs) > 0:
@@ -186,9 +189,21 @@ class YoloVideo:
 				if LABELS.get(classIDs[i], classIDs[i]) in self.pickedClass:
 					intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
 					if intersects_flag:
+						trackObj = self.jumpstart_tracking([bounding_box]) # initialize tracking to occur in future
 						carAmount += 1
+						
+						
 						print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
 						print("Intersection with ROI: TRUE")
             			
-			return carAmount
-		return 0
+			return carAmount, trackObj
+		return 0, None
+		
+	def jumpstart_tracking(self, bbox):
+		return TrackingStream(bbox, self.frame)
+		
+		
+		
+		
+		
+		

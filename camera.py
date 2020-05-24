@@ -22,6 +22,8 @@ class Camera:
 		self.car_count = 0
 		#self.frame_delay = 5
 		self.initialize_video_stream(url)
+		self.isTracked = False
+		self.trackObj = None
 
 	def __iter__(self):
 		"""
