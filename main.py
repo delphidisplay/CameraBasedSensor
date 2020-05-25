@@ -3,6 +3,8 @@ from flask import Flask, request, render_template, Response, flash
 from datetime import datetime
 import cv2
 import threading
+import numpy as np
+from matplotlib import pyplot as plt
 
 from datetime import datetime
 import time
@@ -23,6 +25,9 @@ detection_algo = None
 camera_dictionary = {}
 
 current_camera = None
+
+# Debug Frame 
+DEBUG_FRAME = np.ones([100,100,3],dtype=np.uint8)  * 155
 
 total_cars_count = 0
 
@@ -105,10 +110,13 @@ def __perform_tracking(frame):
 		Kickstarts the tracking on the given frame. This is run on a thread concurrent to the main server.
 	"""
 	global ACTIVE_YOLO_THREAD
+	global DEBUG_FRAME
 	
 	camera = camera_dictionary[current_camera]
 	
-	success, bbox = camera.trackObj.update_tracker(frame, camera.ROI)
+	success, tracking_debug_frame = camera.trackObj.update_tracker(frame)
+	DEBUG_FRAME = tracking_debug_frame
+	
 	print("TRACKING Complete", time.strftime('%a %H:%M:%S')) 
 	
 	if not success:
@@ -125,10 +133,12 @@ def __perform_detection(frame):
 	global ACTIVE_YOLO_THREAD
 	global total_cars_count
 	global detection_algo
+	global DEBUG_FRAME
 
 	with data_lock:
 		detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
-		numCars, trackObj = detection_algo.detect_intersections() 
+		numCars, trackObj, detection_debug_frame = detection_algo.detect_intersections() 
+		DEBUG_FRAME = detection_debug_frame
 
 		__log_car_json(numCars)
 	
@@ -153,7 +163,7 @@ def __get_frames():
 
 	for frame in camera_dictionary[current_camera]: # __iter__() is overloaded, gets next frame in stream
 		roi = camera_dictionary[current_camera].ROI
-
+	
 		# Check to make sure that the current camera has a specified ROI and that there's no thread running.
 		if roi and not ACTIVE_YOLO_THREAD:
 			
@@ -168,6 +178,15 @@ def __get_frames():
 			ACTIVE_YOLO_THREAD = True
 
 		yield(prepare_frame_for_display(frame, current_camera))
+		
+def __get_debug_frames():
+	"""
+		Generator function to show debug frames to frontend
+	"""
+	global DEBUG_FRAME
+	
+	while True:
+		yield(prepare_frame_for_display(DEBUG_FRAME, current_camera))
 
 @app.route('/')
 def show_stream():
@@ -182,6 +201,13 @@ def stream_feed():
 		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
 	"""
 	return Response(__get_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+	
+@app.route("/debug_feed")
+def debug_feed():
+	"""
+		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
+	"""
+	return Response(__get_debug_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/record_roi', methods=['POST'])
 def record_roi():

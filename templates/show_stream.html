@@ -38,6 +38,7 @@
 </div>
 <canvas id="myCanvas" width="800px" height="450px" style="background: url('{{ url_for('stream_feed') }}')"></canvas>
 
+<canvas id="debugCanvas" width="800px" height="450px" style="background: url('{{ url_for('debug_feed') }}')"></canvas>
 <br>
 
 <form action="/choose_camera" method="post">
@@ -103,6 +104,11 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 
 <script>
+
+var debugCanvas = document.getElementById("debugCanvas").getContext("2d");
+debugCanvas.font = '30px serif';
+debugCanvas.fillStyle = "#00ff00";
+debugCanvas.fillText("DEBUG STREAM", 10, 30);
 
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
