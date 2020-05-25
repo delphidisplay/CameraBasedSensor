@@ -189,7 +189,7 @@ class YoloVideo:
 				if LABELS.get(classIDs[i], classIDs[i]) in self.pickedClass:
 					intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
 					if intersects_flag:
-						trackObj = self.jumpstart_tracking([bounding_box]) # initialize tracking to occur in future
+						trackObj = self.jumpstart_tracking([(x, y, w, h)]) # initialize tracking to occur in future
 						carAmount += 1
 						
 						

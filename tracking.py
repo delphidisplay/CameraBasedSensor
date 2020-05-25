@@ -1,4 +1,7 @@
 import cv2
+from time import sleep
+import imutils
+
 from find_intersect import intersection_of_polygons
 
 # used for tracking vehicles in streams
@@ -9,86 +12,69 @@ from find_intersect import intersection_of_polygons
 # 3. update tracker until self.isTracked = False
 
 
-class TrackingStream:
+class TrackingStream: # SPEED UP - TESTING reduces frame in half before feeding to tracker for speed
 
 	def __init__(self, bbox, frame):
+		
 		self.bbox = bbox # FIGURE OUT WHAT BOUNDING BOX IS INPUT, should be top left, bottom right
-		self.tracker = self.init_tracker(frame)
+		self.tracker = None
+		self.init_tracker(frame)
 	
 
-	def init_tracker(self, frame, trackerType="csrt"):
+	def init_tracker(self, frame, trackerType="kcf"):
 		"""initializes the OpenCV multitracker object"""
 		multiTracker = cv2.MultiTracker_create()
+
+		frame = imutils.resize(frame, width=int(frame.shape[1]/2), height=int(frame.shape[0]/2)) # SPEED UP - TESTING
+		
 		for bbox in self.bbox:
+		
+			bbox = tuple([int(v/2) for v in bbox]) # SPEED UP - TESTING
+		
 			multiTracker.add(createTrackerByName(trackerType), frame, bbox)
 	
 		self.tracker = multiTracker
 
 
 	def update_tracker(self, frame, ROI):
-		"""returns bbox after updating tracker on new frame"""
+		"""returns bbox after updating tracker on new frame"""		
+		frame = imutils.resize(frame, width=int(frame.shape[1]/2), height=int(frame.shape[0]/2)) # SPEED UP - TESTING
 		success, boxes = self.tracker.update(frame)
 		
+		if not success:
+			return False, None
+		
 		#extract the bounding box coordinates
-		(x, y) = (boxes[0][0], boxes[0][1])
-		(w, h) = (boxes[0][2], boxes[0][3])
+		(x, y, w, h) = [int(v*2) for v in boxes[0]] # gets only first box, SPEED UP - TESTING
 
 		#get shape of bounding box to get intersection with ROI
 		bounding_box = [(x,y),(x,y+h),(x+w,y+h),(x+w,y),(x,y)]
 		
-		intersects_flag = intersection_of_polygons(ROI,bounding_box)
-		if intersects_flag:
-			self.bbox = boxes
-			return success, self.bbox
+		intersects_flag = intersection_of_polygons(ROI,bounding_box) # ALWAYS FALSE FOR SOME REASON
 		
-		return False, None
-
+		###if intersects_flag: # COMMENTED OUT BECAUSE intersects_flag is always false
+		###	self.bbox = boxes
+		###	return success, self.bbox
+		
+		###return False, None
+		
+		self.bbox = boxes
+		return success, boxes
  	
-#def createTrackerByName(trackerType):
-#	"""returns correct tracker from OpenCV object tracker API"""
-#
-#	OPENCV_OBJECT_TRACKERS = {
-#		"csrt": cv2.TrackerCSRT_create(),
-#		"kcf": cv2.TrackerKCF_create,
-#		"boosting": cv2.TrackerBoosting_create,
-#		"mil": cv2.TrackerMIL_create,
-#		"tld": cv2.TrackerTLD_create,
-#		"medianflow": cv2.TrackerMedianFlow_create,
-#		"mosse": cv2.TrackerMOSSE_create
-#	}
-#
-#	return OPENCV_OBJECT_TRACKERS[trackerType]
-	
-	
 def createTrackerByName(trackerType):
-  """returns correct tracker from OpenCV object tracker API"""
-  trackerTypes = ['boosting', 'mil', 'kcf', 'tld', 'medianflow', 'goturn', 'mosse', 'csrt']
+	"""returns correct tracker from OpenCV object tracker API"""
 
-  # Create a tracker based on tracker name
-  if trackerType == trackerTypes[0]:
-    tracker = cv2.TrackerBoosting_create()
-  elif trackerType == trackerTypes[1]:
-    tracker = cv2.TrackerMIL_create()
-  elif trackerType == trackerTypes[2]:
-    tracker = cv2.TrackerKCF_create()
-  elif trackerType == trackerTypes[3]:
-    tracker = cv2.TrackerTLD_create()
-  elif trackerType == trackerTypes[4]:
-    tracker = cv2.TrackerMedianFlow_create()
-  elif trackerType == trackerTypes[5]:
-    tracker = cv2.TrackerGOTURN_create()
-  elif trackerType == trackerTypes[6]:
-    tracker = cv2.TrackerMOSSE_create()
-  elif trackerType == trackerTypes[7]:
-    tracker = cv2.TrackerCSRT_create()
-  else:
-    tracker = None
-    print('Incorrect tracker name')
-    print('Available trackers are:')
-    for t in trackerTypes:
-      print(t)
+	OPENCV_OBJECT_TRACKERS = {
+		"csrt": cv2.TrackerCSRT_create,
+		"kcf": cv2.TrackerKCF_create,
+		"boosting": cv2.TrackerBoosting_create,
+		"mil": cv2.TrackerMIL_create,
+		"tld": cv2.TrackerTLD_create,
+		"medianflow": cv2.TrackerMedianFlow_create,
+		"mosse": cv2.TrackerMOSSE_create
+	}
 
-  return tracker
+	return OPENCV_OBJECT_TRACKERS[trackerType]()
     
     
     

@@ -57,7 +57,7 @@ def __log_car_json(numCars):
 		print(json_message)
 		return
 
-	print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
+	#print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
 
 	if numCars == prev and prev < first:
 		#Car left ROI
@@ -106,13 +106,14 @@ def __perform_tracking(frame):
 	"""
 	global ACTIVE_YOLO_THREAD
 	
-	trackObj = camera_dictionary[current_camera].trackObj
+	camera = camera_dictionary[current_camera]
 	
-	success, bbox = trackObj.update_tracker(frame)
-	print(f"Tracking Results: {success} {bbox}")
+	success, bbox = camera.trackObj.update_tracker(frame, camera.ROI)
+	print("TRACKING Complete", time.strftime('%a %H:%M:%S')) 
 	
 	if not success:
-		camera_dictionary[current_camera].isTracked = False
+		print("LOST TRACKING")
+		camera.isTracked = False
 		__log_car_json(numCars=0)
 	
 	ACTIVE_YOLO_THREAD = False
@@ -121,7 +122,6 @@ def __perform_detection(frame):
 	"""
 		Kickstarts the yolo algorithm detection on the given frame. This is run on a thread concurrent to the main server.
 	"""
-
 	global ACTIVE_YOLO_THREAD
 	global total_cars_count
 	global detection_algo
@@ -132,16 +132,17 @@ def __perform_detection(frame):
 
 		__log_car_json(numCars)
 	
-		print("Detection Complete", time.strftime('%a %H:%M:%S')) 
+		print("DETECTION Complete", time.strftime('%a %H:%M:%S')) 
 	
 		if numCars > 0:
 			total_cars_count += numCars
 			print('Number of Vehicles Detected: {}'.format(numCars))
 			print('Total Vehicles Counted: {}'.format(total_cars_count))
 			
+	__init_tracking(trackObj) 
+	
 	ACTIVE_YOLO_THREAD = False
 	
-	__init_tracking(trackObj) 
 
 
 def __get_frames():
@@ -150,7 +151,7 @@ def __get_frames():
 	"""
 	global thread, ACTIVE_YOLO_THREAD
 
-	for frame in camera_dictionary[current_camera]:
+	for frame in camera_dictionary[current_camera]: # __iter__() is overloaded, gets next frame in stream
 		roi = camera_dictionary[current_camera].ROI
 
 		# Check to make sure that the current camera has a specified ROI and that there's no thread running.
@@ -158,9 +159,12 @@ def __get_frames():
 			
 			if camera_dictionary[current_camera].isTracked:
 				thread = threading.Thread(target=__perform_tracking,args=(frame,), daemon = True)
+			
 			else:
 				thread = threading.Thread(target=__perform_detection,args=(frame,), daemon = True)
+			
 			thread.start()
+			
 			ACTIVE_YOLO_THREAD = True
 
 		yield(prepare_frame_for_display(frame, current_camera))
