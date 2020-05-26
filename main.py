@@ -6,6 +6,7 @@ import threading
 
 from datetime import datetime
 import time
+import collections
 import argparse
 
 
@@ -21,11 +22,19 @@ ACTIVE_YOLO_THREAD = False
 # Global variables
 detection_algo = None
 camera_dictionary = {}
-
 current_camera = None
+#current_camera = 'rtsp://admin:12345@172.16.15.12'
+camera_dictionary[current_camera] = Camera(current_camera)
+#second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
+#camera_dictionary[second_camera] = Camera(second_camera)
+yolo_detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny"))
+
+min_frames = 2
+car_counts = collections.deque([-1]*min_frames)
+in_lane = False
+out_lane = True
 
 total_cars_count = 0
-
 first = 0
 prev = 0
 
@@ -34,13 +43,22 @@ app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-def __log_car_detection(numCars):
-	global first
-	global prev
 
-	#Gets current time
-	now = datetime.now()
-	s1 = now.strftime("%Y/%m/%d, %H:%M:%S")
+'''
+Method sends json messages whenever a car is detected and enough frames have passed
+User can determine how many frames should pass before a message is sent by modifying
+the variable min_frames above
+Parameters:
+numCars: the number of cars detected in the frame by the model
+'''
+def __log_car_detection(numCars):
+	global in_lane
+	global out_lane
+	global min_frames
+
+	# Gets current time
+		# [UPDATE] 05/19/2020: current time is now in seconds from Jan 1 1970
+	s1 = time.time()
 
 
 	camera =  camera_dictionary[current_camera]
@@ -53,42 +71,47 @@ def __log_car_detection(numCars):
 
 	}
 
-
-	if numCars is None or prev is None or first is None:
+	if numCars is None or min_frames < 1:
 		print(json_message)
 		return
 
-	print("NUMCARS: " + str(numCars) + " Prev: " + str(prev) + " FIRST: " + str(first))
+	car_counts.append(numCars)
+	car_counts.popleft()
+	print(car_counts)
 
-	if numCars == prev and prev < first:
+	if car_counts == (collections.deque([0]*min_frames)) and in_lane:
 		#Car left ROI
 		json_message["status"] = "002"
-		camera.car_count += 1
 
 		print(json_message)
+		out_lane = True
+		in_lane = False
 		#with open('log.txt', 'a') as file:
 		#    file.write(json.dumps(json_message))
 
-	elif numCars == prev and prev > first:
+	elif car_counts == (collections.deque([1]*min_frames)) and out_lane:
 		#Car entered ROI
 		json_message["status"] = "001"
+		camera.car_count += 1
 		print(json_message)
+		in_lane = True
+		out_lane = False
 		#with open('log.txt', 'a') as file:
 		#    file.write(json.dumps(json_message))
 
-	first = prev
-	prev = numCars
 
 
-
+'''
+Method to test the __log_car_detection method
+'''
 def __test_json_messages():
 	print("IN TEST AREA")
 	numCars = 0
 	for i in range(10):
 		__log_car_detection(numCars)
-		if i == 4:
+		if i == 2:
 			numCars = 1
-		if i == 7:
+		if i == 6:
 			numCars = 0
 		print(i)
 		time.sleep(1)
@@ -262,11 +285,4 @@ def __parseArguments():
 if __name__ == "__main__":
 	__parseArguments()
 	app.run(host="0.0.0.0", debug=False)
-	
-	
-	
-	
-	
-	
-	
-	
+	#__test_json_messages()
