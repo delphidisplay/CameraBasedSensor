@@ -65,7 +65,6 @@ class Camera:
 		self.VS.stop()
 
 class CameraIterator:
-
 	"""
 		This object is created so that you can iterate through a camera object
 	"""
@@ -83,8 +82,15 @@ class CameraIterator:
 
 		# If we are not able to read a proper frame from the stream, this will fail.
 		frame = self.camera.VS.read()
-		assert frame is not None
-
+	
+		restartCount = 0
+		while frame is None:
+			if restartCount == 5:
+				raise Exception("Frame is None")
+			self.camera.initialize_video_stream(self.camera.url())
+			frame = self.camera.VS.read()
+			restartCount+=1
+		
 		return frame
 
 """

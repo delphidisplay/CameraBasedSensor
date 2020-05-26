@@ -3,16 +3,16 @@ from flask import Flask, request, render_template, Response, flash
 from datetime import datetime
 import cv2
 import threading
-import atexit
-import pdb
+
+from datetime import datetime
 import time
 import collections
+import argparse
 
 
 # Package-specific imports
 from camera import Camera
 from utils import *
-from YoloVideo import YoloVideo
 
 
 # Threading variables
@@ -20,8 +20,9 @@ data_lock = threading.Lock()
 ACTIVE_YOLO_THREAD = False
 
 # Global variables
+detection_algo = None
 camera_dictionary = {}
-current_camera = 0
+current_camera = None
 #current_camera = 'rtsp://admin:12345@172.16.15.12'
 camera_dictionary[current_camera] = Camera(current_camera)
 #second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
@@ -32,6 +33,10 @@ min_frames = 2
 car_counts = collections.deque([-1]*min_frames)
 in_lane = False
 out_lane = True
+
+total_cars_count = 0
+first = 0
+prev = 0
 
 # Main Flask used for routing.
 app = Flask(__name__)
@@ -54,6 +59,7 @@ def __log_car_detection(numCars):
 	# Gets current time
 		# [UPDATE] 05/19/2020: current time is now in seconds from Jan 1 1970
 	s1 = time.time()
+
 
 	camera =  camera_dictionary[current_camera]
 
@@ -117,12 +123,21 @@ def __perform_detection(frame):
 	"""
 
 	global ACTIVE_YOLO_THREAD
+	global total_cars_count
+	global detection_algo
 
 	with data_lock:
-		yolo_detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
-		numCars = yolo_detection_algo.detect_intersections()
+		detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
+		numCars = detection_algo.detect_intersections() 
 		__log_car_detection(numCars)
-		print('Number of Cars Detected: {}'.format(numCars))
+	
+		print("Detection Complete", time.strftime('%a %H:%M:%S')) 
+	
+		if numCars > 0:
+			total_cars_count += numCars
+			print('Number of Vehicles Detected: {}'.format(numCars))
+			print('Total Vehicles Counted: {}'.format(total_cars_count))
+			
 	ACTIVE_YOLO_THREAD = False
 
 
@@ -162,14 +177,14 @@ def record_roi():
 	"""
 		Updates the current camera stream's ROI coordinates.
 	"""
-	print(request.form)
+	print("RECEIVED ROI")
+	#print(request.form)
 
 	roi_coord = []
 	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
 		x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
 		roi_coord.append([int(x_coord), int(y_coord)])
-
-	print(roi_coord)
+	#print(roi_coord)
 
 	if is_valid_roi(roi_coord): # validate the ROI coordinates
 		#print("VALID ROI SPECIFIED")
@@ -234,6 +249,40 @@ def remove_camera():
 
 	return render_template('show_stream.html', camera_dict=camera_dictionary, current_camera=current_camera)
 
+def __parseArguments():
+	"""Choose arguments to run flask application. Arguments are --model and --webcam"""
+	global camera_dictionary
+	global detection_algo
+	global current_camera
+	
+	parser = argparse.ArgumentParser("Run Detection Flask App")
+	parser.add_argument("--model", required=True, help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
+	parser.add_argument("--webcam", type=int, default=0, help="Enter 1 for webcam, 0 for default IP cameras")
+	args = parser.parse_args()
+	
+	
+	if args.model == "cpu-tiny-yolov3" or args.model == "cpu-yolov3":
+		from YoloVideo import YoloVideo
+		detection_algo = YoloVideo(initialize_yolo(modelType=args.model))
+
+	elif args.model == "tpu-tiny-yolov3" or args.model == "tpu-mobilenetv2":
+		from tpuVideo import tpuVideo
+		detection_algo = tpuVideo(initialize_tpu(modelType=args.model), modelType=args.model)
+	
+	if args.webcam == 1:
+		first_camera = 0 
+		camera_dictionary[first_camera] = Camera(first_camera)
+	else:
+		first_camera = 'rtsp://admin:12345@172.16.15.12'
+		camera_dictionary[first_camera] = Camera(first_camera)
+
+		second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
+		camera_dictionary[second_camera] = Camera(second_camera)
+
+	current_camera = first_camera
+
+
 if __name__ == "__main__":
+	__parseArguments()
 	app.run(host="0.0.0.0", debug=False)
 	#__test_json_messages()
