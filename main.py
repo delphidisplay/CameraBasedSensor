@@ -6,6 +6,7 @@ import threading
 import atexit
 import pdb
 import time
+import collections
 
 
 # Package-specific imports
@@ -28,9 +29,7 @@ camera_dictionary[current_camera] = Camera(current_camera)
 yolo_detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny"))
 
 min_frames = 2
-car_counts = [-1]*min_frames
-enter_list = [1]*min_frames
-exit_list = [0]*min_frames
+car_counts = collections.deque([-1]*min_frames)
 in_lane = False
 out_lane = True
 
@@ -50,6 +49,7 @@ numCars: the number of cars detected in the frame by the model
 def __log_car_detection(numCars):
 	global in_lane
 	global out_lane
+	global min_frames
 
 	# Gets current time
 		# [UPDATE] 05/19/2020: current time is now in seconds from Jan 1 1970
@@ -70,9 +70,10 @@ def __log_car_detection(numCars):
 		return
 
 	car_counts.append(numCars)
-	car_counts.pop(0)
+	car_counts.popleft()
+	print(car_counts)
 
-	if car_counts == exit_list and in_lane:
+	if car_counts == (collections.deque([0]*min_frames)) and in_lane:
 		#Car left ROI
 		json_message["status"] = "002"
 
@@ -82,7 +83,7 @@ def __log_car_detection(numCars):
 		#with open('log.txt', 'a') as file:
 		#    file.write(json.dumps(json_message))
 
-	elif car_counts == enter_list and out_lane:
+	elif car_counts == (collections.deque([1]*min_frames)) and out_lane:
 		#Car entered ROI
 		json_message["status"] = "001"
 		camera.car_count += 1
@@ -235,3 +236,4 @@ def remove_camera():
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", debug=False)
+	#__test_json_messages()
