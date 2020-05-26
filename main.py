@@ -27,7 +27,7 @@ current_camera = None
 #camera_dictionary[current_camera] = Camera(current_camera)
 #second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 #camera_dictionary[second_camera] = Camera(second_camera)
-yolo_detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny"))
+#yolo_detection_algo = YoloVideo(initialize_yolo(modelType="yolov3-tiny"))
 
 min_frames = 2
 car_counts = collections.deque([-1]*min_frames)
