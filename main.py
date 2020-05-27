@@ -165,7 +165,7 @@ def record_roi():
 	roi_coord = []
 	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
 		x_coord, y_coord = request.form["roi_coord[{}][x]".format(rc)], request.form["roi_coord[{}][y]".format(rc)]
-		print("x_coord", x_coord, type(x_coord), "y_coord", y_coord, type(y_coord))
+		#print("x_coord", x_coord, type(x_coord), "y_coord", y_coord, type(y_coord))
 		
 		if x_coord == "NaN" or y_coord == "NaN":
 			roi_coord_is_NaN = True
@@ -246,9 +246,9 @@ def __parseArguments():
 	global current_camera
 	
 	parser = argparse.ArgumentParser("Run Detection Flask App")
-	parser.add_argument("--model", required=True, help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
+	parser.add_argument("--model", default="tpu-tiny-yolov3", help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
 	parser.add_argument("--webcam", default="camera", help="Type webcam for webcam, camera for default IP cameras, or video path for video input")
-	parser.add_argument("--videoOutput", type=int, default =0, help="Enter 1 for video output and output")
+	parser.add_argument("--videoOutput", type=int, default=0, help="Enter 1 for video output and output")
 	args = parser.parse_args()
 	
 	
@@ -269,15 +269,19 @@ def __parseArguments():
 
 		second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 		camera_dictionary[second_camera] = Camera(second_camera)
+	
+	elif args.webcam =="video":		
+		first_camera = "./inputVideos/video1.mp4" 
+		camera_dictionary[first_camera] = Video(first_camera)
+		
+		second_camera = "./inputVideos/video2.mp4" 
+		camera_dictionary[second_camera] = Video(second_camera)	
+	
 	else:
 		first_camera = args.webcam
 		camera_dictionary[first_camera] = Video(first_camera)
-		
-		second_camera = "./inputVideos/video2.mp4" # just to have 2 videos to try out at the same time
-		camera_dictionary[second_camera] = Video(second_camera)	
-
  
-	current_camera = second_camera
+	current_camera = first_camera
 
 		
 if __name__ == "__main__":
