@@ -11,6 +11,7 @@ import argparse
 
 # Package-specific imports
 from camera import Camera
+from video import Video
 from utils import *
 
 
@@ -244,7 +245,8 @@ def __parseArguments():
 	
 	parser = argparse.ArgumentParser("Run Detection Flask App")
 	parser.add_argument("--model", required=True, help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
-	parser.add_argument("--webcam", type=int, default=0, help="Enter 1 for webcam, 0 for default IP cameras")
+	parser.add_argument("--webcam", default="camera", help="Type webcam for webcam, camera for default IP cameras, or video path for video input")
+	parser.add_argument("--videoOutput", type=int, default =0, help="Enter 1 for video output and output")
 	args = parser.parse_args()
 	
 	
@@ -256,19 +258,23 @@ def __parseArguments():
 		from tpuVideo import tpuVideo
 		detection_algo = tpuVideo(initialize_tpu(modelType=args.model), modelType=args.model)
 	
-	if args.webcam == 1:
+	if args.webcam == "webcam":
 		first_camera = 0 
 		camera_dictionary[first_camera] = Camera(first_camera)
-	else:
+	elif args.webcam =="camera":
 		first_camera = 'rtsp://admin:12345@172.16.15.12'
 		camera_dictionary[first_camera] = Camera(first_camera)
 
 		second_camera = 'rtsp://admin:!hylanD3550@172.16.15.11:554/1/h264major'
 		camera_dictionary[second_camera] = Camera(second_camera)
-
+	else:
+		first_camera = args.webcam
+		camera_dictionary[first_camera] = Video(first_camera)
+	
+	#why? 
 	current_camera = first_camera
 
-
+		
 if __name__ == "__main__":
 	__parseArguments()
 	app.run(host="0.0.0.0", debug=False)
