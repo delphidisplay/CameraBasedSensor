@@ -246,7 +246,7 @@ def __parseArguments():
 	global current_camera
 	
 	parser = argparse.ArgumentParser("Run Detection Flask App")
-	parser.add_argument("--model", default="tpu-tiny-yolov3", help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
+	parser.add_argument("--model", default="cpu-tiny-yolov3", help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
 	parser.add_argument("--webcam", default="camera", help="Type webcam for webcam, camera for default IP cameras, or video path for video input")
 	parser.add_argument("--videoOutput", type=int, default=0, help="Enter 1 for video output and output")
 	args = parser.parse_args()
