@@ -23,7 +23,7 @@ def intersection_of_polygons(ROI, BBOX, thresh=0.7, debug=False, showPlot=False,
 	isIntersect = BBOX.intersects(ROI) # boolean to determine if intersection is true
 
 	if not isIntersect:
-		print("BBOX intersects ROI: {}".format(isIntersect))
+		#print("BBOX intersects ROI: {}".format(isIntersect))
 		return False
 
 	isIntersectArea = INTERSECT.area

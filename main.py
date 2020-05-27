@@ -65,7 +65,8 @@ def __log_car_detection(numCars):
 		#Car left ROI
 		json_message["status"] = "002"
 		camera.car_count += 1
-
+		
+		print()
 		print(json_message)
 		#with open('log.txt', 'a') as file:
 		#    file.write(json.dumps(json_message))
@@ -73,6 +74,7 @@ def __log_car_detection(numCars):
 	elif numCars == prev and prev > first:
 		#Car entered ROI
 		json_message["status"] = "001"
+		print()
 		print(json_message)
 		#with open('log.txt', 'a') as file:
 		#    file.write(json.dumps(json_message))
@@ -113,8 +115,8 @@ def __perform_detection(frame):
 	
 		if numCars > 0:
 			total_cars_count += numCars
-			print('Number of Vehicles Detected: {}'.format(numCars))
-			print('Total Vehicles Counted: {}'.format(total_cars_count))
+			#print('Number of Vehicles Detected: {}'.format(numCars))
+			#print('Total Vehicles Counted: {}'.format(total_cars_count))
 			
 	ACTIVE_YOLO_THREAD = False
 
@@ -270,9 +272,12 @@ def __parseArguments():
 	else:
 		first_camera = args.webcam
 		camera_dictionary[first_camera] = Video(first_camera)
-	
-	#why? 
-	current_camera = first_camera
+		
+		second_camera = "./inputVideos/video2.mp4" # just to have 2 videos to try out at the same time
+		camera_dictionary[second_camera] = Video(second_camera)	
+
+ 
+	current_camera = second_camera
 
 		
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ class YoloVideo:
 		self.threshold = 0.3
 		self.debug = False
 		self.labels = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
-		self.pickedClass = ['car', 'motorcycle', 'truck', 'bus']
+		self.pickedClass = ['car', 'motorcycle', 'truck']
 		self.detection_info = None
 
 	def set_frame_and_roi(self,frame,camera):
@@ -187,8 +187,8 @@ class YoloVideo:
 					intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
 					if intersects_flag:
 						carAmount += 1
-						print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
-						print("Intersection with ROI: TRUE")
+						#print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
+						#print("Intersection with ROI: TRUE")
             			
 			return carAmount
 		return 0
