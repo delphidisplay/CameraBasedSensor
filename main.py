@@ -25,6 +25,9 @@ camera_dictionary = {}
 
 current_camera = None
 
+# Debug Frame 
+DEBUG_FRAME = np.ones([100,100,3],dtype=np.uint8)  * 155
+
 total_cars_count = 0
 
 first = 0
@@ -105,10 +108,12 @@ def __perform_detection(frame):
 	global ACTIVE_YOLO_THREAD
 	global total_cars_count
 	global detection_algo
+	global DEBUG_FRAME
 
 	with data_lock:
 		detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
-		numCars = detection_algo.detect_intersections() 
+		numCars, detection_debug_frame = detection_algo.detect_intersections() 
+		DEBUG_FRAME = detection_debug_frame
 		__log_car_detection(numCars)
 	
 		#print("Detection Complete", time.strftime('%a %H:%M:%S')) 
@@ -137,6 +142,15 @@ def __get_frames():
 			ACTIVE_YOLO_THREAD = True
 
 		yield(prepare_frame_for_display(frame, current_camera))
+		
+def __get_debug_frames():
+	"""
+		Generator function to show debug frames to frontend
+	"""
+	global DEBUG_FRAME
+	
+	while True:
+		yield(prepare_frame_for_display(DEBUG_FRAME, current_camera))
 
 @app.route('/')
 def show_stream():
@@ -151,6 +165,13 @@ def stream_feed():
 		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
 	"""
 	return Response(__get_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
+
+@app.route("/debug_feed")
+def debug_feed():
+	"""
+		Utilizes the generator function main.py::__get_frames() to send frames from the current_camera stream into the frontend.
+	"""
+	return Response(__get_debug_frames(), mimetype = "multipart/x-mixed-replace; boundary=frame")
 
 @app.route('/record_roi', methods=['POST'])
 def record_roi():
