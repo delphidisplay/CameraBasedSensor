@@ -29,6 +29,7 @@ class YoloVideo:
 		self.labels = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
 		self.pickedClass = ['car', 'motorcycle', 'truck']
 		self.detection_info = None
+		self.DEBUG_IMAGE = np.ones([100,100,3],dtype=np.uint8) * 55
 		
 
 	def set_frame_and_roi(self,frame,camera):
