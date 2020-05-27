@@ -7,7 +7,7 @@ import threading
 from datetime import datetime
 import time
 import argparse
-
+import numpy as np
 
 # Package-specific imports
 from camera import Camera
@@ -150,6 +150,7 @@ def __get_debug_frames():
 	global DEBUG_FRAME
 	
 	while True:
+		time.sleep(0.01)
 		yield(prepare_frame_for_display(DEBUG_FRAME, current_camera))
 
 @app.route('/')

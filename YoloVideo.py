@@ -23,9 +23,9 @@ class YoloVideo:
 		self.net = net
 		self.frame = None
 		self.ROI = []
-		self.confidence = 0.25
+		self.confidence = 0.20
 		self.threshold = 0.3
-		self.debug = False
+		self.debug = True
 		self.labels = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
 		self.pickedClass = ['car', 'motorcycle', 'truck']
 		self.detection_info = None
@@ -184,21 +184,16 @@ class YoloVideo:
 				if bbox_class in self.pickedClass:
 					intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
 					if intersects_flag:
-						#trackObj = self.jumpstart_tracking([(x, y, w, h)], bbox_class, self.ROI) # initialize tracking
 						carAmount += 1
 						
-						print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
-						print("Intersection with ROI: TRUE")
+						#print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
+						#print("Intersection with ROI: TRUE")
 				
 				if self.debug:
 					self.draw_debug_bbox([x, y, w, h], intersects_flag, bbox_class, confidences[i])
             			
-			return carAmount, self.DEBUG_IMAGE #, trackObj 
-		return 0, self.DEBUG_IMAGE #, None 
-		
-	#def jumpstart_tracking(self, bbox, trackedClass, ROI):
-	#	return TrackingStream(bbox, self.frame, trackedClass, ROI)
-		
+			return carAmount, self.DEBUG_IMAGE
+		return 0, self.DEBUG_IMAGE 
 	
 	def draw_debug_setup(self): #draw ROI and setup text
 		self.DEBUG_IMAGE = self.frame
