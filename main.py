@@ -298,6 +298,15 @@ def __parseArguments():
 		
 		second_camera = "./inputVideos/video2.mp4" 
 		camera_dictionary[second_camera] = Video(second_camera)	
+		
+		third_camera = "./inputVideos/video3.mp4"
+		camera_dictionary[third_camera] = Video(third_camera)	
+	
+		fourth_camera = "./inputVideos/video3-creeper.mp4"
+		camera_dictionary[fourth_camera] = Video(fourth_camera)	
+	
+		fifth_camera = "./inputVideos/video123.mp4"
+		camera_dictionary[fifth_camera] = Video(fifth_camera)	
 	
 	else:
 		first_camera = args.webcam
