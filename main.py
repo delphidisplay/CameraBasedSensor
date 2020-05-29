@@ -19,7 +19,7 @@ camera_dictionary = {}
 current_camera = None
 
 # JSON Logging related global variables.
-min_frames = 2
+min_frames = 5
 car_counts = deque([-1]*min_frames)
 in_lane = False
 out_lane = True
@@ -60,12 +60,12 @@ def __log_car_detection(numCars):
 
     car_counts.append(numCars)
     car_counts.popleft()
-    print(car_counts)
 
     if car_counts == (deque([0]*min_frames)) and in_lane:
         #Car left ROI
         json_message["status"] = "002"
-
+        camera_dictionary[current_camera].car_count += 1
+        #print("NUM CARS: " + str(numCars))
         print(json_message)
         out_lane = True
         in_lane = False
@@ -75,7 +75,7 @@ def __log_car_detection(numCars):
     elif car_counts == (deque([1]*min_frames)) and out_lane:
         #Car entered ROI
         json_message["status"] = "001"
-        camera.car_count += 1
+        print("NUM CARS: " + str(numCars))
         print(json_message)
         in_lane = True
         out_lane = False
@@ -108,17 +108,17 @@ def __perform_detection(frame):
     global detection_algo
 
     with data_lock:
-        detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera]) 
-        numCars = detection_algo.detect_intersections() 
+        detection_algo.set_frame_and_roi(frame, camera_dictionary[current_camera])
+        numCars = detection_algo.detect_intersections()
         __log_car_detection(numCars)
 
-        print("Detection Complete", time.strftime('%a %H:%M:%S')) 
+        #print("Detection Complete", time.strftime('%a %H:%M:%S'))
 
         if numCars > 0:
             total_cars_count += numCars
-            print('Number of Vehicles Detected: {}'.format(numCars))
-            print('Total Vehicles Counted: {}'.format(total_cars_count))
-                    
+            #print('Number of Vehicles Detected: {}'.format(numCars))
+            #print('Total Vehicles Counted: {}'.format(total_cars_count))
+
     ACTIVE_YOLO_THREAD = False
 
 
@@ -158,7 +158,7 @@ def record_roi():
 	"""
             Updates the current camera stream's ROI coordinates.
 	"""
-	print("RECEIVED ROI")
+	#print("RECEIVED ROI")
 
 	roi_coord = []
 	for rc in range(len(request.form)//2): # translate the received ROI in request.form into a Python list of coordinates
@@ -232,14 +232,14 @@ def __parseArguments():
     global camera_dictionary
     global detection_algo
     global current_camera
-    
+
     # Parses the user given command for command line arguemnts.
     parser = ArgumentParser("Run Detection Flask App")
     parser.add_argument("--model", required=True, help="Model to load. Choose between cpu-yolov3, cpu-tiny-yolov3, tpu-tiny-yolov3, tpu-mobilenetv2")
     parser.add_argument("--webcam", type=int, default=0, help="Enter 1 for webcam, 0 for default IP cameras")
     args = parser.parse_args()
-    
-    
+
+
     if args.model == "cpu-tiny-yolov3" or args.model == "cpu-yolov3":
         # Non-tpu version of the algo
         from YoloVideo import YoloVideo
@@ -249,10 +249,10 @@ def __parseArguments():
         # TPU version of the algo
         from tpuVideo import tpuVideo
         detection_algo = tpuVideo(initialize_tpu(modelType=args.model), modelType=args.model)
-    
+
     if args.webcam == 1:
         # Using local camera's webcam
-        first_camera = 0 
+        first_camera = 0
         camera_dictionary[first_camera] = Camera(first_camera)
     else:
         # Using Delphi's testing cameras.
