@@ -140,7 +140,7 @@ class YoloVideo:
 		"""
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
-		
+
 		idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence, self.threshold)
 		return idxs
 
@@ -149,11 +149,11 @@ class YoloVideo:
 			detects if the detected vehicle is within the ROI
 			self.net: yolo object
 		"""
-		
+
 		self.extract_detection_information()
-		
+
 		idxs = self.apply_suppression()
-		LABELS = self.labels 
+		LABELS = self.labels
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
 		classIDs = self.detection_info[2]
@@ -182,13 +182,13 @@ class YoloVideo:
 					#plt.plot(ROI_x, ROI_y, label="ROI", linewidth=4, color="magenta")
 					plt.title("Figure {}, Intersect Threshold: {}, Vehicle Counted: {}".format("1", "0", True))
 					#plt.show()
-						
+
 				if LABELS.get(classIDs[i], classIDs[i]) in self.pickedClass:
 					intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
 					if intersects_flag:
 						carAmount += 1
-						print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
-						print("Intersection with ROI: TRUE")
-            			
+						#print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
+						#print("Intersection with ROI: TRUE")
+
 			return carAmount
 		return 0
