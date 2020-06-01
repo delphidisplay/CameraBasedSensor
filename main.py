@@ -4,6 +4,7 @@ from collections import deque
 from argparse import ArgumentParser
 from threading import Thread, Lock
 import time
+import serial
 
 # Package-specific imports
 from camera import Camera
@@ -46,6 +47,7 @@ def __log_car_detection(numCars):
 
     # Gets current time in epoch from Jan 1 1970
     s1 = time.time()
+    ser = serial.Serial(4663)  # open serial port
 
     json_message = {
             "camera_id": current_camera,
@@ -67,6 +69,7 @@ def __log_car_detection(numCars):
         camera_dictionary[current_camera].car_count += 1
         #print("NUM CARS: " + str(numCars))
         print(json_message)
+        #ser.write(json_message)
         out_lane = True
         in_lane = False
         #with open('log.txt', 'a') as file:
@@ -77,10 +80,13 @@ def __log_car_detection(numCars):
         json_message["status"] = "001"
         #print("NUM CARS: " + str(numCars))
         print(json_message)
+        #ser.write(json_message)
         in_lane = True
         out_lane = False
         #with open('log.txt', 'a') as file:
         #    file.write(json.dumps(json_message))
+
+    ser.close() 
 
 def __test_json_messages():
     '''
