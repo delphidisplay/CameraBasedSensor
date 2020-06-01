@@ -41,16 +41,19 @@ class Camera:
 		"""
 		self.ROI = coordinates
 
+	def build_video_stream(self, camera_url):
+		# Build Stream
+		self.VS = VideoStream(src=camera_url).start()
+		sample_frame = self.VS.read()
+		return sample_frame
+
 	def initialize_video_stream(self,camera_url):
 		"""
 			Given a camera url, build a stream object and get the dimensions of it.
 		"""
 
-		# Build Stream
-		self.VS = VideoStream(src=camera_url).start()
-
 		# If we are not able to read a proper frame from the stream, this will fail.
-		sample_frame = self.VS.read()
+		sample_frame = self.build_video_stream(camera_url)
 		assert sample_frame is not None
 
 		# Set the width and height.
@@ -93,6 +96,7 @@ class CameraIterator:
 		
 		return frame
 
+		
 """
 	Testing to check for how long it takes to run
 """

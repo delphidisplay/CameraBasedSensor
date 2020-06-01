@@ -23,12 +23,14 @@ class YoloVideo:
 		self.net = net
 		self.frame = None
 		self.ROI = []
-		self.confidence = 0.25
+		self.confidence = 0.20
 		self.threshold = 0.3
-		self.debug = False
+		self.debug = True
 		self.labels = load_labels(self.get_yolo_labels()) if self.get_yolo_labels() else {}
-		self.pickedClass = ['car', 'motorcycle', 'truck', 'bus']
+		self.pickedClass = ['car', 'motorcycle', 'truck']
 		self.detection_info = None
+		self.DEBUG_IMAGE = np.ones([100,100,3],dtype=np.uint8) * 55
+		
 
 	def set_frame_and_roi(self,frame,camera):
 		"""
@@ -157,6 +159,11 @@ class YoloVideo:
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
 		classIDs = self.detection_info[2]
+		
+		trackObj = None
+		
+		if self.debug:
+			self.draw_debug_setup()
 
 		#ensure at least one detection exists
 		if len(idxs) > 0:
@@ -168,27 +175,46 @@ class YoloVideo:
 				(w, h) = (boxes[i][2], boxes[i][3])
 
 				#get shape of bounding box to get intersection with ROI
-				bounding_box = [(x,y),(x,y+h),(x+w,y+h),(x+w,y),(x,y)]
-
-				if self.debug:
-					#plot bounding box and ROI to see if they make sense
-					bounding_box_x = [x,x,x+w,x+w,x]
-					bounding_box_y = [y,y+h,y+h,y,y]
-					ROI_x = [i[0] for i in self.ROI]
-					ROI_y = [i[1] for i in self.ROI]
-					print("bounding_box: " , bounding_box)
-					print("self.ROI: ", self.ROI)
-					#plt.plot(bounding_box_x,bounding_box_y, label="BBOX", linewidth=4, color="orange")
-					#plt.plot(ROI_x, ROI_y, label="ROI", linewidth=4, color="magenta")
-					plt.title("Figure {}, Intersect Threshold: {}, Vehicle Counted: {}".format("1", "0", True))
-					#plt.show()
-
-				if LABELS.get(classIDs[i], classIDs[i]) in self.pickedClass:
+				bounding_box = [(x,y),(x,y+h),(x+w,y+h),(x+w,y),(x,y)]		
+						
+				bbox_class = LABELS.get(classIDs[i], classIDs[i])
+				
+				intersects_flag = False
+				
+				if bbox_class in self.pickedClass:
 					intersects_flag = intersection_of_polygons(self.ROI,bounding_box)
 					if intersects_flag:
 						carAmount += 1
+						
 						#print(f"DETECTED: {LABELS.get(classIDs[i], classIDs[i])}, CONFIDENCE: {confidences[i]}")
 						#print("Intersection with ROI: TRUE")
-
-			return carAmount
-		return 0
+				
+				if self.debug:
+					self.draw_debug_bbox([x, y, w, h], intersects_flag, bbox_class, confidences[i])
+            			
+			return carAmount, self.DEBUG_IMAGE
+		return 0, self.DEBUG_IMAGE 
+	
+	def draw_debug_setup(self): #draw ROI and setup text
+		self.DEBUG_IMAGE = self.frame
+			
+		cv2.putText(self.DEBUG_IMAGE, text=f"DETECTION MODE", 
+					org=(int(self.DEBUG_IMAGE.shape[1]*0.75), 40), fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+					fontScale=1, color=(150,255,255), thickness=2, lineType=cv2.LINE_AA)	
+			
+		cv2.polylines(self.DEBUG_IMAGE, [np.asarray(self.ROI, np.int32).reshape((-1,1,2))], True, (150,255,255), 3)
+	
+	
+	def draw_debug_bbox(self, bbox, intersects_flag, bbox_class, confidence):
+		x, y, w, h = bbox
+		
+		debugColor = (255, 0, 0) # blue
+		if bbox_class in self.pickedClass:
+			debugColor = (0, 0, 255) # red
+			if intersects_flag:
+				debugColor = (0,255,0) # green
+	
+		cv2.rectangle(self.DEBUG_IMAGE, (x, y), (x+w, y+h), debugColor, 2)
+		cv2.putText(self.DEBUG_IMAGE, text=f"{bbox_class}: {int(confidence*100)}%", 
+			org=(x,y-5), fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+			fontScale=1, color=debugColor, thickness=2, lineType=cv2.LINE_AA)
