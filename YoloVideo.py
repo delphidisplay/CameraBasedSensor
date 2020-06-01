@@ -142,7 +142,7 @@ class YoloVideo:
 		"""
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
-		
+
 		idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence, self.threshold)
 		return idxs
 
@@ -151,11 +151,11 @@ class YoloVideo:
 			detects if the detected vehicle is within the ROI
 			self.net: yolo object
 		"""
-		
+
 		self.extract_detection_information()
-		
+
 		idxs = self.apply_suppression()
-		LABELS = self.labels 
+		LABELS = self.labels
 		boxes = self.detection_info[0]
 		confidences = self.detection_info[1]
 		classIDs = self.detection_info[2]
