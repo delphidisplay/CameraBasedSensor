@@ -289,6 +289,9 @@ def __parseArguments():
 		from tpuVideo import tpuVideo
 		detection_algo = tpuVideo(initialize_tpu(modelType=args.model), modelType=args.model)
 	
+	elif args.model == "gpu-mobilenetv2":
+		from GpuVideo import GpuVideo
+		detection_algo = GpuVideo(initialize_tpu(modelType=args.model))
 	if args.input == "webcam":
 		first_camera = 0 
 		camera_dictionary[first_camera] = Camera(first_camera)

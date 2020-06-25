@@ -4,6 +4,7 @@ from datetime import datetime
 from shapely.geometry import Polygon
 from imutils import resize
 from detect_image import make_interpreter
+from trt_utils.ssd import TrtSSD
 
 def add_frame_overlay(frame, camera_name="NOT_SPECIFIED"):
 	"""
@@ -66,3 +67,11 @@ def initialize_tpu(modelType="tpu-tiny-yolov3"):
     interpreter = make_interpreter(model)
     interpreter.allocate_tensors()
     return interpreter
+
+def initialize_gpu(modelType="gpu-mobilenetv2"):
+	"""Loads"""
+	print("[INFO] loading ____ model into GPU...")
+	model = "trt_utils/TRT_ssd_mobilenet_v2_coco.bin"
+	INPUT_HW = (300,300)
+	return TrtSSD(model,INPUT_HW)
+
